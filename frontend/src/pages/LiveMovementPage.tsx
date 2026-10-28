@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Video,
   Activity,
@@ -11,7 +11,6 @@ import {
   ArrowRight,
   User,
   Edit3,
-  ShieldAlert,
   AlertCircle,
   Clock
 } from 'lucide-react';
@@ -143,65 +142,67 @@ export const LiveMovementPage: React.FC = () => {
   const getStatusBadge = (isDone: boolean, status?: string | null) => {
     if (isDone) {
       return (
-        <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
-          <CheckCircle2 className="w-3 h-3" />
+        <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
+          <CheckCircle2 className="w-3 h-3 text-emerald-600" />
           <span>Completed</span>
         </span>
       );
     }
     if (status === 'Skipped') {
       return (
-        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700">
+        <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
           Skipped
         </span>
       );
     }
     return (
-      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-800/80 text-slate-400 border border-slate-700/60">
+      <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200">
         Pending
       </span>
     );
   };
 
   return (
-    <div className="space-y-6 py-6 max-w-6xl mx-auto">
+    <div className="space-y-6 max-w-6xl mx-auto">
       {/* Page Title & Intro */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight flex items-center gap-2">
-            <Video className="w-7 h-7 text-sky-400" />
+          <h1 className="text-2xl sm:text-3xl font-bold text-navy-900 tracking-tight flex items-center gap-2.5">
+            <span className="w-9 h-9 rounded-xl bg-teal-50 border border-teal-200 text-teal-700 flex items-center justify-center">
+              <Video className="w-5 h-5" />
+            </span>
             <span>Live Movement Screening Battery</span>
           </h1>
-          <p className="text-sm text-slate-400 mt-1">
+          <p className="text-sm text-slate-600 mt-1.5">
             Standardized 4-test computer-vision protocol assessing resting tremor, motor agility, joint excursion, and postural stability.
           </p>
         </div>
 
         {/* Battery Progress Pill */}
-        <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-800/80 border border-slate-700 text-xs">
-          <Clock className="w-4 h-4 text-sky-400" />
-          <span className="text-slate-300">Battery Progress:</span>
-          <strong className="text-sky-300 font-mono font-bold">{completedCount} of 4 Tests</strong>
-          <span className="text-slate-500">({Math.round((completedCount / 4) * 100)}%)</span>
+        <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-xs shadow-xs shrink-0">
+          <Clock className="w-4 h-4 text-teal-600" />
+          <span className="text-slate-600">Battery Progress:</span>
+          <strong className="text-navy-900 font-mono font-semibold">{completedCount} of 4 Tests</strong>
+          <span className="text-slate-400">({Math.round((completedCount / 4) * 100)}%)</span>
         </div>
       </div>
 
       <MedicalDisclaimer compact />
 
       {/* Patient Profile Intake Bar */}
-      <div className="p-3.5 sm:p-4 rounded-2xl bg-slate-850 border border-slate-700/80 shadow-md flex flex-wrap items-center justify-between gap-3 text-xs">
+      <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-xs flex flex-wrap items-center justify-between gap-3 text-xs">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center border border-sky-500/30">
-            <User className="w-4 h-4" />
+          <div className="w-9 h-9 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center border border-slate-200">
+            <User className="w-4 h-4 text-teal-700" />
           </div>
           <div>
-            <span className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold block">Active Patient Subject</span>
+            <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold block">Active Patient Subject</span>
             <div className="flex items-center gap-2">
-              <strong className="text-sm font-bold text-white">
+              <strong className="text-sm font-semibold text-navy-900">
                 {patient.name.trim() ? patient.name : 'Unregistered Patient (Intake Required)'}
               </strong>
               {patient.name.trim() && (
-                <span className="text-slate-400">
+                <span className="text-slate-500 font-medium">
                   • {patient.age ? `${patient.age} yrs` : 'Age N/A'} • {patient.gender}
                 </span>
               )}
@@ -212,7 +213,7 @@ export const LiveMovementPage: React.FC = () => {
         <button
           type="button"
           onClick={() => setShowIntakeModal(true)}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-sky-400 hover:text-sky-300 font-semibold border border-slate-700 transition-colors"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 text-teal-700 hover:text-teal-800 font-medium border border-slate-200 transition-colors"
         >
           <Edit3 className="w-3.5 h-3.5" />
           <span>{patient.name.trim() ? 'Edit Patient Details' : 'Complete Patient Intake'}</span>
@@ -225,113 +226,113 @@ export const LiveMovementPage: React.FC = () => {
         <button
           type="button"
           onClick={() => setActiveTab('tremor')}
-          className={`p-3.5 rounded-2xl border text-left transition-all ${
+          className={`p-3.5 rounded-xl border text-left transition-all ${
             activeTab === 'tremor'
-              ? 'bg-slate-800 border-sky-500/80 shadow-lg ring-1 ring-sky-500/50'
-              : 'bg-slate-800/40 border-slate-700/60 hover:border-slate-600'
+              ? 'bg-white border-teal-600 shadow-xs ring-1 ring-teal-500/20'
+              : 'bg-white/70 border-slate-200 hover:border-slate-300 hover:bg-white'
           }`}
         >
           <div className="flex items-center justify-between mb-2">
-            <Activity className="w-5 h-5 text-sky-400" />
+            <Activity className={`w-5 h-5 ${activeTab === 'tremor' ? 'text-teal-600' : 'text-slate-400'}`} />
             {getStatusBadge(isTest1Done, tremorMetrics?.status)}
           </div>
-          <h4 className="font-bold text-white text-xs">1. Hand Tremor</h4>
-          <p className="text-[11px] text-slate-400 mt-0.5">30s stability & PSD</p>
+          <h4 className="font-semibold text-navy-900 text-xs">1. Hand Tremor</h4>
+          <p className="text-[11px] text-slate-500 mt-0.5">30s stability & PSD</p>
         </button>
 
         {/* Tab 2: Finger Tapping */}
         <button
           type="button"
           onClick={() => setActiveTab('tapping')}
-          className={`p-3.5 rounded-2xl border text-left transition-all ${
+          className={`p-3.5 rounded-xl border text-left transition-all ${
             activeTab === 'tapping'
-              ? 'bg-slate-800 border-teal-500/80 shadow-lg ring-1 ring-teal-500/50'
-              : 'bg-slate-800/40 border-slate-700/60 hover:border-slate-600'
+              ? 'bg-white border-teal-600 shadow-xs ring-1 ring-teal-500/20'
+              : 'bg-white/70 border-slate-200 hover:border-slate-300 hover:bg-white'
           }`}
         >
           <div className="flex items-center justify-between mb-2">
-            <Zap className="w-5 h-5 text-teal-400" />
+            <Zap className={`w-5 h-5 ${activeTab === 'tapping' ? 'text-teal-600' : 'text-slate-400'}`} />
             {getStatusBadge(isTest2Done, tappingMetrics?.status)}
           </div>
-          <h4 className="font-bold text-white text-xs">2. Finger Tapping</h4>
-          <p className="text-[11px] text-slate-400 mt-0.5">30s agility cadence</p>
+          <h4 className="font-semibold text-navy-900 text-xs">2. Finger Tapping</h4>
+          <p className="text-[11px] text-slate-500 mt-0.5">30s agility cadence</p>
         </button>
 
         {/* Tab 3: Arm Movement */}
         <button
           type="button"
           onClick={() => setActiveTab('arm')}
-          className={`p-3.5 rounded-2xl border text-left transition-all ${
+          className={`p-3.5 rounded-xl border text-left transition-all ${
             activeTab === 'arm'
-              ? 'bg-slate-800 border-indigo-500/80 shadow-lg ring-1 ring-indigo-500/50'
-              : 'bg-slate-800/40 border-slate-700/60 hover:border-slate-600'
+              ? 'bg-white border-teal-600 shadow-xs ring-1 ring-teal-500/20'
+              : 'bg-white/70 border-slate-200 hover:border-slate-300 hover:bg-white'
           }`}
         >
           <div className="flex items-center justify-between mb-2">
-            <Armchair className="w-5 h-5 text-indigo-400" />
+            <Armchair className={`w-5 h-5 ${activeTab === 'arm' ? 'text-teal-600' : 'text-slate-400'}`} />
             {getStatusBadge(isTest3Done, armMetrics?.status)}
           </div>
-          <h4 className="font-bold text-white text-xs">3. Arm Movement</h4>
-          <p className="text-[11px] text-slate-400 mt-0.5">Excursion & SPARC</p>
+          <h4 className="font-semibold text-navy-900 text-xs">3. Arm Movement</h4>
+          <p className="text-[11px] text-slate-500 mt-0.5">Excursion & SPARC</p>
         </button>
 
         {/* Tab 4: Walking / Posture */}
         <button
           type="button"
           onClick={() => setActiveTab('walking')}
-          className={`p-3.5 rounded-2xl border text-left transition-all ${
+          className={`p-3.5 rounded-xl border text-left transition-all ${
             activeTab === 'walking'
-              ? 'bg-slate-800 border-amber-500/80 shadow-lg ring-1 ring-amber-500/50'
-              : 'bg-slate-800/40 border-slate-700/60 hover:border-slate-600'
+              ? 'bg-white border-teal-600 shadow-xs ring-1 ring-teal-500/20'
+              : 'bg-white/70 border-slate-200 hover:border-slate-300 hover:bg-white'
           }`}
         >
           <div className="flex items-center justify-between mb-2">
-            <PersonStanding className="w-5 h-5 text-amber-400" />
+            <PersonStanding className={`w-5 h-5 ${activeTab === 'walking' ? 'text-teal-600' : 'text-slate-400'}`} />
             {getStatusBadge(isTest4Done, walkingMetrics?.status)}
           </div>
-          <h4 className="font-bold text-white text-xs">4. Posture / Walking</h4>
-          <p className="text-[11px] text-slate-400 mt-0.5">Axial alignment</p>
+          <h4 className="font-semibold text-navy-900 text-xs">4. Posture / Walking</h4>
+          <p className="text-[11px] text-slate-500 mt-0.5">Axial alignment</p>
         </button>
 
         {/* Tab 5: Consolidated Summary */}
         <button
           type="button"
           onClick={() => setActiveTab('summary')}
-          className={`p-3.5 rounded-2xl border text-left transition-all col-span-2 sm:col-span-1 relative ${
+          className={`p-3.5 rounded-xl border text-left transition-all col-span-2 sm:col-span-1 relative ${
             activeTab === 'summary'
-              ? 'bg-gradient-to-br from-slate-800 to-sky-950 border-sky-400 shadow-lg'
-              : 'bg-slate-800/40 border-slate-700/60 hover:border-slate-600'
+              ? 'bg-white border-teal-600 shadow-xs ring-1 ring-teal-500/20'
+              : 'bg-white/70 border-slate-200 hover:border-slate-300 hover:bg-white'
           }`}
         >
           <div className="flex items-center justify-between mb-2">
-            <ClipboardList className="w-5 h-5 text-sky-400" />
+            <ClipboardList className={`w-5 h-5 ${activeTab === 'summary' ? 'text-teal-600' : 'text-slate-400'}`} />
             {isBatteryComplete ? (
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+              <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
                 Unlocked
               </span>
             ) : (
-              <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-800 text-amber-400 border border-amber-500/30">
+              <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200">
                 <Lock className="w-2.5 h-2.5" />
                 <span>Locked</span>
               </span>
             )}
           </div>
-          <h4 className="font-bold text-white text-xs">Clinical Summary</h4>
-          <p className="text-[11px] text-slate-400 mt-0.5">Full PDF Report</p>
+          <h4 className="font-semibold text-navy-900 text-xs">Clinical Summary</h4>
+          <p className="text-[11px] text-slate-500 mt-0.5">Full PDF Report</p>
         </button>
       </div>
 
       {/* Sequential Stepper Navigation Guidance Banner */}
       {activeTab === 'tremor' && isTest1Done && (
-        <div className="p-3.5 rounded-2xl bg-sky-950/40 border border-sky-500/40 flex items-center justify-between gap-3 text-xs">
-          <div className="flex items-center gap-2 text-sky-200">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+        <div className="p-3.5 rounded-xl bg-teal-50/80 border border-teal-200 flex items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-2 text-teal-900 font-medium">
+            <CheckCircle2 className="w-4 h-4 text-teal-600 shrink-0" />
             <span>Test 1 (Hand Tremor) successfully tracked and analyzed. Ready for Test 2.</span>
           </div>
           <button
             type="button"
             onClick={() => setActiveTab('tapping')}
-            className="px-3.5 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold flex items-center gap-1.5 shrink-0 transition-colors shadow-md"
+            className="px-3.5 py-1.5 rounded-lg bg-teal-600 hover:bg-teal-700 text-white font-medium flex items-center gap-1.5 shrink-0 transition-colors shadow-xs"
           >
             <span>Proceed to Test 2: Finger Tapping</span>
             <ArrowRight className="w-3.5 h-3.5" />
@@ -340,15 +341,15 @@ export const LiveMovementPage: React.FC = () => {
       )}
 
       {activeTab === 'tapping' && isTest2Done && (
-        <div className="p-3.5 rounded-2xl bg-teal-950/40 border border-teal-500/40 flex items-center justify-between gap-3 text-xs">
-          <div className="flex items-center gap-2 text-teal-200">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+        <div className="p-3.5 rounded-xl bg-teal-50/80 border border-teal-200 flex items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-2 text-teal-900 font-medium">
+            <CheckCircle2 className="w-4 h-4 text-teal-600 shrink-0" />
             <span>Test 2 (Finger Tapping) completed with validated cadence metrics.</span>
           </div>
           <button
             type="button"
             onClick={() => setActiveTab('arm')}
-            className="px-3.5 py-1.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold flex items-center gap-1.5 shrink-0 transition-colors shadow-md"
+            className="px-3.5 py-1.5 rounded-lg bg-teal-600 hover:bg-teal-700 text-white font-medium flex items-center gap-1.5 shrink-0 transition-colors shadow-xs"
           >
             <span>Proceed to Test 3: Arm Movement</span>
             <ArrowRight className="w-3.5 h-3.5" />
@@ -357,15 +358,15 @@ export const LiveMovementPage: React.FC = () => {
       )}
 
       {activeTab === 'arm' && isTest3Done && (
-        <div className="p-3.5 rounded-2xl bg-indigo-950/40 border border-indigo-500/40 flex items-center justify-between gap-3 text-xs">
-          <div className="flex items-center gap-2 text-indigo-200">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+        <div className="p-3.5 rounded-xl bg-teal-50/80 border border-teal-200 flex items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-2 text-teal-900 font-medium">
+            <CheckCircle2 className="w-4 h-4 text-teal-600 shrink-0" />
             <span>Test 3 (Arm Excursion & SPARC Smoothness) completed.</span>
           </div>
           <button
             type="button"
             onClick={() => setActiveTab('walking')}
-            className="px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold flex items-center gap-1.5 shrink-0 transition-colors shadow-md"
+            className="px-3.5 py-1.5 rounded-lg bg-teal-600 hover:bg-teal-700 text-white font-medium flex items-center gap-1.5 shrink-0 transition-colors shadow-xs"
           >
             <span>Proceed to Test 4: Walking & Posture</span>
             <ArrowRight className="w-3.5 h-3.5" />
@@ -374,15 +375,15 @@ export const LiveMovementPage: React.FC = () => {
       )}
 
       {activeTab === 'walking' && isTest4Done && (
-        <div className="p-3.5 rounded-2xl bg-emerald-950/40 border border-emerald-500/40 flex items-center justify-between gap-3 text-xs">
-          <div className="flex items-center gap-2 text-emerald-200">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+        <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-2 text-emerald-950 font-medium">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
             <span>All 4 tests in the screening battery are completed! The full clinical summary is now unlocked.</span>
           </div>
           <button
             type="button"
             onClick={() => setActiveTab('summary')}
-            className="px-4 py-2 rounded-xl bg-gradient-to-r from-sky-600 to-teal-600 hover:from-sky-500 hover:to-teal-500 text-white font-bold flex items-center gap-1.5 shrink-0 transition-all shadow-lg"
+            className="px-4 py-2 rounded-lg bg-teal-600 hover:bg-teal-700 text-white font-medium flex items-center gap-1.5 shrink-0 transition-all shadow-xs"
           >
             <span>View Full Assessment Report</span>
             <ArrowRight className="w-4 h-4" />
@@ -391,7 +392,7 @@ export const LiveMovementPage: React.FC = () => {
       )}
 
       {/* Active Test Viewport */}
-      <div className="bg-slate-850 rounded-3xl p-6 border border-slate-800 shadow-xl">
+      <div className="bg-white rounded-2xl p-6 sm:p-7 border border-slate-200 shadow-xs">
         {activeTab === 'tremor' && (
           <HandTremorTest
             onComplete={(res) => setTremorMetrics(res)}
@@ -432,104 +433,104 @@ export const LiveMovementPage: React.FC = () => {
             ) : (
               /* Locked State Screen */
               <div className="p-8 sm:p-12 text-center max-w-xl mx-auto space-y-6">
-                <div className="w-16 h-16 rounded-2xl bg-amber-500/15 border border-amber-500/30 text-amber-400 flex items-center justify-center mx-auto">
-                  <Lock className="w-8 h-8" />
+                <div className="w-14 h-14 rounded-2xl bg-amber-50 border border-amber-200 text-amber-700 flex items-center justify-center mx-auto">
+                  <Lock className="w-7 h-7" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold text-white">Consolidated Clinical Report Locked</h3>
-                  <p className="text-xs text-slate-400 mt-2 leading-relaxed">
+                  <h3 className="text-xl font-bold text-navy-900">Consolidated Clinical Report Locked</h3>
+                  <p className="text-xs text-slate-600 mt-2 leading-relaxed">
                     To maintain diagnostic integrity and generate the aggregate Parkinson's Probability Index, all 4 movement tests must be completed.
                   </p>
                 </div>
 
                 {/* Progress Checklist */}
-                <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 text-left space-y-3 text-xs">
-                  <span className="font-bold text-slate-300 block uppercase tracking-wider text-[11px]">
+                <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-left space-y-2.5 text-xs">
+                  <span className="font-semibold text-slate-700 block uppercase tracking-wider text-[11px]">
                     Battery Completion Checklist ({completedCount} / 4)
                   </span>
 
-                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-800/60">
-                    <div className="flex items-center gap-2 text-white">
+                  <div className="flex items-center justify-between p-2.5 rounded-lg bg-white border border-slate-200">
+                    <div className="flex items-center gap-2 text-slate-800 font-medium">
                       {isTest1Done ? (
-                        <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                       ) : (
-                        <AlertCircle className="w-4 h-4 text-slate-500" />
+                        <AlertCircle className="w-4 h-4 text-slate-400" />
                       )}
                       <span>1. Hand Tremor Test (30s)</span>
                     </div>
                     {isTest1Done ? (
-                      <span className="text-emerald-400 font-semibold">Done</span>
+                      <span className="text-emerald-700 font-semibold text-[11px]">Done</span>
                     ) : (
                       <button
                         type="button"
                         onClick={() => setActiveTab('tremor')}
-                        className="px-2.5 py-1 rounded bg-sky-600 hover:bg-sky-500 text-white font-semibold"
+                        className="px-2.5 py-1 rounded bg-teal-600 hover:bg-teal-700 text-white font-medium"
                       >
                         Start Test
                       </button>
                     )}
                   </div>
 
-                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-800/60">
-                    <div className="flex items-center gap-2 text-white">
+                  <div className="flex items-center justify-between p-2.5 rounded-lg bg-white border border-slate-200">
+                    <div className="flex items-center gap-2 text-slate-800 font-medium">
                       {isTest2Done ? (
-                        <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                       ) : (
-                        <AlertCircle className="w-4 h-4 text-slate-500" />
+                        <AlertCircle className="w-4 h-4 text-slate-400" />
                       )}
                       <span>2. Finger Tapping Cadence Test</span>
                     </div>
                     {isTest2Done ? (
-                      <span className="text-emerald-400 font-semibold">Done</span>
+                      <span className="text-emerald-700 font-semibold text-[11px]">Done</span>
                     ) : (
                       <button
                         type="button"
                         onClick={() => setActiveTab('tapping')}
-                        className="px-2.5 py-1 rounded bg-teal-600 hover:bg-teal-500 text-white font-semibold"
+                        className="px-2.5 py-1 rounded bg-teal-600 hover:bg-teal-700 text-white font-medium"
                       >
                         Start Test
                       </button>
                     )}
                   </div>
 
-                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-800/60">
-                    <div className="flex items-center gap-2 text-white">
+                  <div className="flex items-center justify-between p-2.5 rounded-lg bg-white border border-slate-200">
+                    <div className="flex items-center gap-2 text-slate-800 font-medium">
                       {isTest3Done ? (
-                        <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                       ) : (
-                        <AlertCircle className="w-4 h-4 text-slate-500" />
+                        <AlertCircle className="w-4 h-4 text-slate-400" />
                       )}
                       <span>3. Arm Movement Excursion & SPARC Test</span>
                     </div>
                     {isTest3Done ? (
-                      <span className="text-emerald-400 font-semibold">Done</span>
+                      <span className="text-emerald-700 font-semibold text-[11px]">Done</span>
                     ) : (
                       <button
                         type="button"
                         onClick={() => setActiveTab('arm')}
-                        className="px-2.5 py-1 rounded bg-indigo-600 hover:bg-indigo-500 text-white font-semibold"
+                        className="px-2.5 py-1 rounded bg-teal-600 hover:bg-teal-700 text-white font-medium"
                       >
                         Start Test
                       </button>
                     )}
                   </div>
 
-                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-800/60">
-                    <div className="flex items-center gap-2 text-white">
+                  <div className="flex items-center justify-between p-2.5 rounded-lg bg-white border border-slate-200">
+                    <div className="flex items-center gap-2 text-slate-800 font-medium">
                       {isTest4Done ? (
-                        <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                       ) : (
-                        <AlertCircle className="w-4 h-4 text-slate-500" />
+                        <AlertCircle className="w-4 h-4 text-slate-400" />
                       )}
                       <span>4. Walking & Postural Alignment Test</span>
                     </div>
                     {isTest4Done ? (
-                      <span className="text-emerald-400 font-semibold">Done</span>
+                      <span className="text-emerald-700 font-semibold text-[11px]">Done</span>
                     ) : (
                       <button
                         type="button"
                         onClick={() => setActiveTab('walking')}
-                        className="px-2.5 py-1 rounded bg-amber-600 hover:bg-amber-500 text-white font-semibold"
+                        className="px-2.5 py-1 rounded bg-teal-600 hover:bg-teal-700 text-white font-medium"
                       >
                         Start Test
                       </button>
@@ -544,22 +545,22 @@ export const LiveMovementPage: React.FC = () => {
 
       {/* Patient Intake Modal */}
       {showIntakeModal && (
-        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-700/80 rounded-3xl max-w-md w-full p-6 sm:p-8 space-y-6 shadow-2xl">
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white border border-slate-200 rounded-2xl max-w-md w-full p-6 sm:p-8 space-y-6 shadow-xl">
             <div className="text-center space-y-2">
-              <div className="w-12 h-12 rounded-2xl bg-sky-500/15 border border-sky-500/30 text-sky-400 flex items-center justify-center mx-auto">
+              <div className="w-12 h-12 rounded-xl bg-teal-50 border border-teal-200 text-teal-700 flex items-center justify-center mx-auto">
                 <User className="w-6 h-6" />
               </div>
-              <h3 className="text-xl font-bold text-white">Patient Intake & Registration</h3>
-              <p className="text-xs text-slate-400">
-                Please enter the patient details for this clinical movement assessment session. These details will be included in the diagnostic PDF report.
+              <h3 className="text-xl font-bold text-navy-900">Patient Intake & Registration</h3>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Please enter the patient details for this clinical movement assessment session. These details will be recorded in the diagnostic PDF report.
               </p>
             </div>
 
             <form onSubmit={handleSavePatient} className="space-y-4 text-xs">
               <div>
-                <label className="block text-slate-300 font-semibold mb-1">
-                  Patient Full Name <span className="text-rose-400">*</span>
+                <label className="block text-slate-700 font-medium mb-1">
+                  Patient Full Name <span className="text-rose-600">*</span>
                 </label>
                 <input
                   type="text"
@@ -567,14 +568,14 @@ export const LiveMovementPage: React.FC = () => {
                   placeholder="e.g. Eleanor Vance"
                   value={patient.name}
                   onChange={(e) => setPatient((prev) => ({ ...prev, name: e.target.value }))}
-                  className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:border-sky-500 focus:outline-none text-sm"
+                  className="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-navy-900 placeholder-slate-400 focus:border-teal-600 focus:ring-1 focus:ring-teal-500/20 focus:outline-none text-sm"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">
-                    Age (Years) <span className="text-rose-400">*</span>
+                  <label className="block text-slate-700 font-medium mb-1">
+                    Age (Years) <span className="text-rose-600">*</span>
                   </label>
                   <input
                     type="number"
@@ -584,12 +585,12 @@ export const LiveMovementPage: React.FC = () => {
                     placeholder="e.g. 68"
                     value={patient.age}
                     onChange={(e) => setPatient((prev) => ({ ...prev, age: e.target.value }))}
-                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:border-sky-500 focus:outline-none text-sm font-mono"
+                    className="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-navy-900 placeholder-slate-400 focus:border-teal-600 focus:ring-1 focus:ring-teal-500/20 focus:outline-none text-sm font-mono"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Gender</label>
+                  <label className="block text-slate-700 font-medium mb-1">Gender</label>
                   <select
                     value={patient.gender}
                     onChange={(e) =>
@@ -598,7 +599,7 @@ export const LiveMovementPage: React.FC = () => {
                         gender: e.target.value as PatientInfo['gender']
                       }))
                     }
-                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white focus:border-sky-500 focus:outline-none text-sm"
+                    className="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-navy-900 focus:border-teal-600 focus:ring-1 focus:ring-teal-500/20 focus:outline-none text-sm"
                   >
                     <option value="Male">Male</option>
                     <option value="Female">Female</option>
@@ -611,7 +612,7 @@ export const LiveMovementPage: React.FC = () => {
               <div className="pt-2">
                 <button
                   type="submit"
-                  className="w-full py-3 rounded-xl bg-gradient-to-r from-sky-600 to-teal-600 hover:from-sky-500 hover:to-teal-500 text-white font-bold text-sm shadow-lg shadow-sky-500/20 transition-all"
+                  className="w-full py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-medium text-sm shadow-xs transition-colors"
                 >
                   Save & Begin Movement Battery
                 </button>
@@ -621,7 +622,7 @@ export const LiveMovementPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setShowIntakeModal(false)}
-                  className="w-full py-2 text-xs text-slate-400 hover:text-white transition-colors"
+                  className="w-full py-2 text-xs text-slate-500 hover:text-slate-800 transition-colors"
                 >
                   Cancel / Keep Current Details
                 </button>

@@ -7,25 +7,40 @@ export default {
   theme: {
     extend: {
       colors: {
-        brand: {
-          50: '#f0f9ff',
-          100: '#e0f2fe',
-          500: '#0284c7',
-          600: '#0369a1',
-          700: '#075985',
-          800: '#0c4a6e',
-          900: '#082f49',
+        navy: {
+          50: '#f0f4f9',
+          100: '#d9e2ee',
+          200: '#b4c6dc',
+          300: '#84a2c4',
+          400: '#567caa',
+          500: '#385f90',
+          600: '#274b77',
+          700: '#173B64', // Secondary navy
+          800: '#0F2D5B', // Primary navy
+          900: '#0A1E3D',
+          950: '#061327'
         },
         clinical: {
-          teal: '#0d9488',
-          emerald: '#059669',
-          amber: '#d97706',
-          rose: '#e11d48',
-          slate: '#0f172a'
+          teal: '#14B8A6',
+          darkTeal: '#0F766E',
+          bg: '#F8FAFC',
+          card: '#FFFFFF',
+          border: '#E2E8F0',
+          surface: '#F1F5F9',
+          text: '#172B4D',
+          muted: '#64748B',
+          success: '#15803D',
+          warning: '#B45309',
+          error: '#B91C1C',
+          info: '#1D4ED8'
         }
+      },
+      boxShadow: {
+        'card': '0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05)',
+        'card-hover': '0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05)',
+        'dropdown': '0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04)'
       }
     },
   },
   plugins: [],
 }
-

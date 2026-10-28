@@ -1,5 +1,14 @@
 import React, { useState } from 'react';
-import { Brain, Sparkles, AlertCircle, CheckCircle2, RotateCcw, Send, ShieldAlert } from 'lucide-react';
+import {
+  Brain,
+  Sparkles,
+  AlertCircle,
+  CheckCircle2,
+  RotateCcw,
+  Send,
+  ShieldAlert,
+  Sliders
+} from 'lucide-react';
 import { api } from '../services/api';
 import { VoiceFeatures, PredictionResponse } from '../types';
 import { MedicalDisclaimer } from '../components/MedicalDisclaimer';
@@ -93,14 +102,13 @@ export const PredictionPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-8 py-6 max-w-5xl mx-auto">
-      {/* Title */}
+    <div className="space-y-6 py-2 max-w-5xl mx-auto">
+      {/* Title & Introduction */}
       <div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight flex items-center gap-2">
-          <Brain className="w-7 h-7 text-sky-400" />
-          <span>Acoustic Dysphonia Feature Predictor</span>
+        <h1 className="text-2xl sm:text-3xl font-bold text-navy-800 tracking-tight">
+          Acoustic Dysphonia Feature Predictor
         </h1>
-        <p className="text-sm text-slate-400 mt-1">
+        <p className="text-sm text-slate-500 mt-0.5">
           Submit 22 vocal fold acoustic perturbation measurements to evaluate against the trained machine learning pipeline.
         </p>
       </div>
@@ -108,25 +116,25 @@ export const PredictionPage: React.FC = () => {
       <MedicalDisclaimer compact />
 
       {/* Preset Controls */}
-      <div className="flex flex-wrap items-center justify-between gap-3 p-4 rounded-xl bg-slate-800/60 border border-slate-700/60">
-        <div className="flex items-center space-x-2 text-xs font-semibold text-slate-300">
-          <Sparkles className="w-4 h-4 text-sky-400" />
-          <span>Quick Sample Presets (Official UCI Test Records):</span>
+      <div className="flex flex-wrap items-center justify-between gap-3 p-4 rounded-2xl bg-white border border-slate-200 shadow-xs">
+        <div className="flex items-center space-x-2 text-xs font-semibold text-slate-700">
+          <Sparkles className="w-4 h-4 text-teal-600" />
+          <span>Quick Baseline Presets (UCI Benchmark Records):</span>
         </div>
         <div className="flex flex-wrap gap-2">
           <button
             type="button"
             onClick={() => loadPreset(PRESET_PARKINSONS, "Parkinson's Subject Recording")}
-            className="px-3 py-1.5 rounded-lg text-xs font-medium bg-amber-500/15 text-amber-300 border border-amber-500/30 hover:bg-amber-500/25 transition-colors"
+            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 transition-colors"
           >
-            Sample PD Patient Recording
+            Load PD Specimen
           </button>
           <button
             type="button"
             onClick={() => loadPreset(PRESET_HEALTHY, "Healthy Control Recording")}
-            className="px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/25 transition-colors"
+            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100 transition-colors"
           >
-            Sample Healthy Control Recording
+            Load Healthy Specimen
           </button>
           <button
             type="button"
@@ -135,7 +143,7 @@ export const PredictionPage: React.FC = () => {
               setResult(null);
               setError(null);
             }}
-            className="px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-700 transition-colors flex items-center gap-1"
+            className="px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:text-navy-800 hover:bg-slate-100 transition-colors flex items-center gap-1"
           >
             <RotateCcw className="w-3.5 h-3.5" />
             <span>Reset</span>
@@ -147,38 +155,45 @@ export const PredictionPage: React.FC = () => {
       {result && (
         <div className={`p-6 rounded-2xl border transition-all ${
           result.prediction_label === 1
-            ? 'bg-amber-950/30 border-amber-500/50 text-amber-100 shadow-xl'
-            : 'bg-emerald-950/30 border-emerald-500/50 text-emerald-100 shadow-xl'
+            ? 'bg-rose-50/80 border-rose-200 text-rose-950 shadow-xs'
+            : 'bg-emerald-50/80 border-emerald-200 text-emerald-950 shadow-xs'
         }`}>
           <div className="space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/10 pb-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-black/5 pb-4">
               <div className="flex items-center space-x-3">
                 {result.prediction_label === 1 ? (
-                  <AlertCircle className="w-8 h-8 text-amber-400 shrink-0" />
+                  <div className="w-10 h-10 rounded-xl bg-rose-100 border border-rose-200 text-rose-700 flex items-center justify-center shrink-0">
+                    <AlertCircle className="w-6 h-6" />
+                  </div>
                 ) : (
-                  <CheckCircle2 className="w-8 h-8 text-emerald-400 shrink-0" />
+                  <div className="w-10 h-10 rounded-xl bg-emerald-100 border border-emerald-200 text-emerald-700 flex items-center justify-center shrink-0">
+                    <CheckCircle2 className="w-6 h-6" />
+                  </div>
                 )}
                 <div>
-                  <span className="text-xs uppercase font-semibold tracking-wider text-slate-400">Model Output Classification</span>
-                  <h3 className="text-xl sm:text-2xl font-bold text-white">{result.prediction_text}</h3>
+                  <span className="text-[11px] uppercase font-bold tracking-wider text-slate-500">
+                    Inference Output Classification
+                  </span>
+                  <h3 className="text-xl sm:text-2xl font-bold text-navy-800">
+                    {result.prediction_text}
+                  </h3>
                 </div>
               </div>
-              <div className="text-xs bg-slate-900/60 px-3 py-1.5 rounded-lg border border-white/10 self-start sm:self-auto">
-                <span className="text-slate-400">Pipeline: </span>
-                <strong className="text-sky-300">{result.model_name}</strong>
+              <div className="text-xs bg-white px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 shadow-xs self-start sm:self-auto font-mono">
+                Pipeline: <strong className="text-navy-800">{result.model_name}</strong>
               </div>
             </div>
 
             {/* Probabilities */}
             {result.probability_parkinsons !== null && result.probability_healthy !== null && (
-              <div className="space-y-2">
-                <div className="flex justify-between text-xs font-medium">
+              <div className="space-y-1.5">
+                <div className="flex justify-between text-xs font-semibold text-slate-700">
                   <span>Confidence: {(result.confidence_score * 100).toFixed(1)}%</span>
                   <span>PD: {(result.probability_parkinsons * 100).toFixed(1)}% | Healthy: {(result.probability_healthy * 100).toFixed(1)}%</span>
                 </div>
-                <div className="w-full h-3 bg-slate-900 rounded-full overflow-hidden flex">
+                <div className="w-full h-3 bg-slate-200 rounded-full overflow-hidden flex">
                   <div
-                    className="bg-amber-500 transition-all duration-500"
+                    className="bg-rose-500 transition-all duration-500"
                     style={{ width: `${result.probability_parkinsons * 100}%` }}
                     title={`Parkinson's Probability: ${(result.probability_parkinsons * 100).toFixed(1)}%`}
                   />
@@ -191,8 +206,8 @@ export const PredictionPage: React.FC = () => {
               </div>
             )}
 
-            <div className="p-3 bg-black/30 rounded-lg text-xs leading-relaxed text-slate-300 flex items-start gap-2">
-              <ShieldAlert className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+            <div className="p-3 bg-white/80 border border-slate-200/60 rounded-xl text-xs leading-relaxed text-slate-600 flex items-start gap-2 shadow-xs">
+              <ShieldAlert className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
               <span>{result.disclaimer}</span>
             </div>
           </div>
@@ -200,23 +215,23 @@ export const PredictionPage: React.FC = () => {
       )}
 
       {error && (
-        <div className="p-4 rounded-xl bg-rose-950/40 border border-rose-500/40 text-rose-200 text-sm flex items-center space-x-3">
-          <AlertCircle className="w-5 h-5 text-rose-400 shrink-0" />
+        <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-sm flex items-center space-x-3">
+          <AlertCircle className="w-5 h-5 text-rose-600 shrink-0" />
           <span>{error}</span>
         </div>
       )}
 
       {/* Feature Input Form */}
-      <form onSubmit={handleSubmit} className="space-y-8">
+      <form onSubmit={handleSubmit} className="space-y-6">
         {/* Category 1: Fundamental Frequency */}
-        <div className="bg-slate-800/40 border border-slate-700/60 rounded-2xl p-6 space-y-4">
-          <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-sky-400" />
+        <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-4 shadow-xs">
+          <h3 className="text-sm font-bold text-navy-800 uppercase tracking-wider flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-teal-500" />
             <span>1. Fundamental Vocal Frequency Measures (Hz)</span>
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
             <div>
-              <label className="block text-slate-300 font-medium mb-1">
+              <label className="block text-slate-700 font-semibold mb-1">
                 Average Frequency (MDVP:Fo)
               </label>
               <input
@@ -225,13 +240,13 @@ export const PredictionPage: React.FC = () => {
                 required
                 value={formData["MDVP:Fo(Hz)"]}
                 onChange={(e) => handleInputChange("MDVP:Fo(Hz)", e.target.value)}
-                className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white font-mono focus:border-sky-500 focus:outline-none"
+                className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-navy-800 font-mono text-sm focus:bg-white focus:border-teal-500 focus:outline-none"
               />
-              <span className="text-[11px] text-slate-500 mt-1 block">Typical range: 88 – 260 Hz</span>
+              <span className="text-[11px] text-slate-400 mt-1 block">Typical range: 88 – 260 Hz</span>
             </div>
 
             <div>
-              <label className="block text-slate-300 font-medium mb-1">
+              <label className="block text-slate-700 font-semibold mb-1">
                 Maximum Frequency (MDVP:Fhi)
               </label>
               <input
@@ -240,13 +255,13 @@ export const PredictionPage: React.FC = () => {
                 required
                 value={formData["MDVP:Fhi(Hz)"]}
                 onChange={(e) => handleInputChange("MDVP:Fhi(Hz)", e.target.value)}
-                className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white font-mono focus:border-sky-500 focus:outline-none"
+                className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-navy-800 font-mono text-sm focus:bg-white focus:border-teal-500 focus:outline-none"
               />
-              <span className="text-[11px] text-slate-500 mt-1 block">Upper pitch boundary in vocalization</span>
+              <span className="text-[11px] text-slate-400 mt-1 block">Upper pitch boundary in phonation</span>
             </div>
 
             <div>
-              <label className="block text-slate-300 font-medium mb-1">
+              <label className="block text-slate-700 font-semibold mb-1">
                 Minimum Frequency (MDVP:Flo)
               </label>
               <input
@@ -255,255 +270,255 @@ export const PredictionPage: React.FC = () => {
                 required
                 value={formData["MDVP:Flo(Hz)"]}
                 onChange={(e) => handleInputChange("MDVP:Flo(Hz)", e.target.value)}
-                className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white font-mono focus:border-sky-500 focus:outline-none"
+                className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-navy-800 font-mono text-sm focus:bg-white focus:border-teal-500 focus:outline-none"
               />
-              <span className="text-[11px] text-slate-500 mt-1 block">Lower pitch boundary in vocalization</span>
+              <span className="text-[11px] text-slate-400 mt-1 block">Lower pitch boundary in phonation</span>
             </div>
           </div>
         </div>
 
         {/* Category 2: Jitter (Frequency Variation) */}
-        <div className="bg-slate-800/40 border border-slate-700/60 rounded-2xl p-6 space-y-4">
-          <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-teal-400" />
+        <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-4 shadow-xs">
+          <h3 className="text-sm font-bold text-navy-800 uppercase tracking-wider flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-teal-500" />
             <span>2. Frequency Perturbation (Jitter Measures)</span>
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 text-xs">
             <div>
-              <label className="block text-slate-300 font-medium mb-1">Jitter Percentage (%)</label>
+              <label className="block text-slate-700 font-semibold mb-1">Jitter Percentage (%)</label>
               <input
                 type="number"
                 step="0.00001"
                 required
                 value={formData["MDVP:Jitter(%)"]}
                 onChange={(e) => handleInputChange("MDVP:Jitter(%)", e.target.value)}
-                className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white font-mono focus:border-sky-500 focus:outline-none"
+                className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-navy-800 font-mono focus:bg-white focus:border-teal-500 focus:outline-none"
               />
             </div>
             <div>
-              <label className="block text-slate-300 font-medium mb-1">Absolute Jitter (Abs)</label>
+              <label className="block text-slate-700 font-semibold mb-1">Absolute Jitter (Abs)</label>
               <input
                 type="number"
                 step="0.000001"
                 required
                 value={formData["MDVP:Jitter(Abs)"]}
                 onChange={(e) => handleInputChange("MDVP:Jitter(Abs)", e.target.value)}
-                className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white font-mono focus:border-sky-500 focus:outline-none"
+                className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-navy-800 font-mono focus:bg-white focus:border-teal-500 focus:outline-none"
               />
             </div>
             <div>
-              <label className="block text-slate-300 font-medium mb-1">RAP</label>
+              <label className="block text-slate-700 font-semibold mb-1">RAP</label>
               <input
                 type="number"
                 step="0.00001"
                 required
                 value={formData["MDVP:RAP"]}
                 onChange={(e) => handleInputChange("MDVP:RAP", e.target.value)}
-                className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white font-mono focus:border-sky-500 focus:outline-none"
+                className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-navy-800 font-mono focus:bg-white focus:border-teal-500 focus:outline-none"
               />
             </div>
             <div>
-              <label className="block text-slate-300 font-medium mb-1">PPQ (5-point)</label>
+              <label className="block text-slate-700 font-semibold mb-1">PPQ (5-point)</label>
               <input
                 type="number"
                 step="0.00001"
                 required
                 value={formData["MDVP:PPQ"]}
                 onChange={(e) => handleInputChange("MDVP:PPQ", e.target.value)}
-                className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white font-mono focus:border-sky-500 focus:outline-none"
+                className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-navy-800 font-mono focus:bg-white focus:border-teal-500 focus:outline-none"
               />
             </div>
             <div>
-              <label className="block text-slate-300 font-medium mb-1">Jitter:DDP</label>
+              <label className="block text-slate-700 font-semibold mb-1">Jitter:DDP</label>
               <input
                 type="number"
                 step="0.00001"
                 required
                 value={formData["Jitter:DDP"]}
                 onChange={(e) => handleInputChange("Jitter:DDP", e.target.value)}
-                className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white font-mono focus:border-sky-500 focus:outline-none"
+                className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-navy-800 font-mono focus:bg-white focus:border-teal-500 focus:outline-none"
               />
             </div>
           </div>
         </div>
 
         {/* Category 3: Shimmer (Amplitude Variation) */}
-        <div className="bg-slate-800/40 border border-slate-700/60 rounded-2xl p-6 space-y-4">
-          <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-amber-400" />
+        <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-4 shadow-xs">
+          <h3 className="text-sm font-bold text-navy-800 uppercase tracking-wider flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-teal-500" />
             <span>3. Amplitude Perturbation (Shimmer Measures)</span>
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 text-xs">
             <div>
-              <label className="block text-slate-300 font-medium mb-1">Shimmer (Local)</label>
+              <label className="block text-slate-700 font-semibold mb-1">Shimmer (Local)</label>
               <input
                 type="number"
                 step="0.0001"
                 required
                 value={formData["MDVP:Shimmer"]}
                 onChange={(e) => handleInputChange("MDVP:Shimmer", e.target.value)}
-                className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white font-mono focus:border-sky-500 focus:outline-none"
+                className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-navy-800 font-mono focus:bg-white focus:border-teal-500 focus:outline-none"
               />
             </div>
             <div>
-              <label className="block text-slate-300 font-medium mb-1">Shimmer (dB)</label>
+              <label className="block text-slate-700 font-semibold mb-1">Shimmer (dB)</label>
               <input
                 type="number"
                 step="0.001"
                 required
                 value={formData["MDVP:Shimmer(dB)"]}
                 onChange={(e) => handleInputChange("MDVP:Shimmer(dB)", e.target.value)}
-                className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white font-mono focus:border-sky-500 focus:outline-none"
+                className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-navy-800 font-mono focus:bg-white focus:border-teal-500 focus:outline-none"
               />
             </div>
             <div>
-              <label className="block text-slate-300 font-medium mb-1">APQ3</label>
+              <label className="block text-slate-700 font-semibold mb-1">APQ3</label>
               <input
                 type="number"
                 step="0.0001"
                 required
                 value={formData["Shimmer:APQ3"]}
                 onChange={(e) => handleInputChange("Shimmer:APQ3", e.target.value)}
-                className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white font-mono focus:border-sky-500 focus:outline-none"
+                className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-navy-800 font-mono focus:bg-white focus:border-teal-500 focus:outline-none"
               />
             </div>
             <div>
-              <label className="block text-slate-300 font-medium mb-1">APQ5</label>
+              <label className="block text-slate-700 font-semibold mb-1">APQ5</label>
               <input
                 type="number"
                 step="0.0001"
                 required
                 value={formData["Shimmer:APQ5"]}
                 onChange={(e) => handleInputChange("Shimmer:APQ5", e.target.value)}
-                className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white font-mono focus:border-sky-500 focus:outline-none"
+                className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-navy-800 font-mono focus:bg-white focus:border-teal-500 focus:outline-none"
               />
             </div>
             <div>
-              <label className="block text-slate-300 font-medium mb-1">MDVP:APQ</label>
+              <label className="block text-slate-700 font-semibold mb-1">MDVP:APQ</label>
               <input
                 type="number"
                 step="0.0001"
                 required
                 value={formData["MDVP:APQ"]}
                 onChange={(e) => handleInputChange("MDVP:APQ", e.target.value)}
-                className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white font-mono focus:border-sky-500 focus:outline-none"
+                className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-navy-800 font-mono focus:bg-white focus:border-teal-500 focus:outline-none"
               />
             </div>
             <div>
-              <label className="block text-slate-300 font-medium mb-1">Shimmer:DDA</label>
+              <label className="block text-slate-700 font-semibold mb-1">Shimmer:DDA</label>
               <input
                 type="number"
                 step="0.0001"
                 required
                 value={formData["Shimmer:DDA"]}
                 onChange={(e) => handleInputChange("Shimmer:DDA", e.target.value)}
-                className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white font-mono focus:border-sky-500 focus:outline-none"
+                className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-navy-800 font-mono focus:bg-white focus:border-teal-500 focus:outline-none"
               />
             </div>
           </div>
         </div>
 
         {/* Category 4: Noise & Nonlinear Dynamics */}
-        <div className="bg-slate-800/40 border border-slate-700/60 rounded-2xl p-6 space-y-4">
-          <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-indigo-400" />
+        <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-4 shadow-xs">
+          <h3 className="text-sm font-bold text-navy-800 uppercase tracking-wider flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-teal-500" />
             <span>4. Noise Harmonics & Nonlinear Dynamical Complexity</span>
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
             <div>
-              <label className="block text-slate-300 font-medium mb-1">NHR (Noise-to-Harmonics)</label>
+              <label className="block text-slate-700 font-semibold mb-1">NHR (Noise-to-Harmonics)</label>
               <input
                 type="number"
                 step="0.0001"
                 required
                 value={formData["NHR"]}
                 onChange={(e) => handleInputChange("NHR", e.target.value)}
-                className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white font-mono focus:border-sky-500 focus:outline-none"
+                className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-navy-800 font-mono focus:bg-white focus:border-teal-500 focus:outline-none"
               />
             </div>
             <div>
-              <label className="block text-slate-300 font-medium mb-1">HNR (Harmonics dB)</label>
+              <label className="block text-slate-700 font-semibold mb-1">HNR (Harmonics dB)</label>
               <input
                 type="number"
                 step="0.01"
                 required
                 value={formData["HNR"]}
                 onChange={(e) => handleInputChange("HNR", e.target.value)}
-                className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white font-mono focus:border-sky-500 focus:outline-none"
+                className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-navy-800 font-mono focus:bg-white focus:border-teal-500 focus:outline-none"
               />
             </div>
             <div>
-              <label className="block text-slate-300 font-medium mb-1">RPDE (Recurrence Entropy)</label>
+              <label className="block text-slate-700 font-semibold mb-1">RPDE (Recurrence Entropy)</label>
               <input
                 type="number"
                 step="0.0001"
                 required
                 value={formData["RPDE"]}
                 onChange={(e) => handleInputChange("RPDE", e.target.value)}
-                className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white font-mono focus:border-sky-500 focus:outline-none"
+                className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-navy-800 font-mono focus:bg-white focus:border-teal-500 focus:outline-none"
               />
             </div>
             <div>
-              <label className="block text-slate-300 font-medium mb-1">DFA (Fractal Exponent)</label>
+              <label className="block text-slate-700 font-semibold mb-1">DFA (Fractal Exponent)</label>
               <input
                 type="number"
                 step="0.0001"
                 required
                 value={formData["DFA"]}
                 onChange={(e) => handleInputChange("DFA", e.target.value)}
-                className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white font-mono focus:border-sky-500 focus:outline-none"
+                className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-navy-800 font-mono focus:bg-white focus:border-teal-500 focus:outline-none"
               />
             </div>
             <div>
-              <label className="block text-slate-300 font-medium mb-1">spread1 (Nonlinear F0 Var 1)</label>
+              <label className="block text-slate-700 font-semibold mb-1">spread1 (Nonlinear F0 Var 1)</label>
               <input
                 type="number"
                 step="0.0001"
                 required
                 value={formData["spread1"]}
                 onChange={(e) => handleInputChange("spread1", e.target.value)}
-                className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white font-mono focus:border-sky-500 focus:outline-none"
+                className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-navy-800 font-mono focus:bg-white focus:border-teal-500 focus:outline-none"
               />
             </div>
             <div>
-              <label className="block text-slate-300 font-medium mb-1">spread2 (Nonlinear F0 Var 2)</label>
+              <label className="block text-slate-700 font-semibold mb-1">spread2 (Nonlinear F0 Var 2)</label>
               <input
                 type="number"
                 step="0.0001"
                 required
                 value={formData["spread2"]}
                 onChange={(e) => handleInputChange("spread2", e.target.value)}
-                className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white font-mono focus:border-sky-500 focus:outline-none"
+                className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-navy-800 font-mono focus:bg-white focus:border-teal-500 focus:outline-none"
               />
             </div>
             <div>
-              <label className="block text-slate-300 font-medium mb-1">D2 (Correlation Dimension)</label>
+              <label className="block text-slate-700 font-semibold mb-1">D2 (Correlation Dimension)</label>
               <input
                 type="number"
                 step="0.0001"
                 required
                 value={formData["D2"]}
                 onChange={(e) => handleInputChange("D2", e.target.value)}
-                className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white font-mono focus:border-sky-500 focus:outline-none"
+                className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-navy-800 font-mono focus:bg-white focus:border-teal-500 focus:outline-none"
               />
             </div>
             <div>
-              <label className="block text-slate-300 font-medium mb-1">PPE (Pitch Period Entropy)</label>
+              <label className="block text-slate-700 font-semibold mb-1">PPE (Pitch Period Entropy)</label>
               <input
                 type="number"
                 step="0.0001"
                 required
                 value={formData["PPE"]}
                 onChange={(e) => handleInputChange("PPE", e.target.value)}
-                className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white font-mono focus:border-sky-500 focus:outline-none"
+                className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-navy-800 font-mono focus:bg-white focus:border-teal-500 focus:outline-none"
               />
             </div>
           </div>
         </div>
 
         {/* Optional Notes */}
-        <div>
-          <label className="block text-xs text-slate-400 font-medium mb-1">
+        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs space-y-1">
+          <label className="block text-xs text-slate-700 font-semibold">
             Specimen Identifier / Researcher Notes (Optional)
           </label>
           <input
@@ -511,16 +526,16 @@ export const PredictionPage: React.FC = () => {
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             placeholder="e.g., Clinical trial session 3 specimen"
-            className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-xs text-white focus:border-sky-500 focus:outline-none"
+            className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-xs text-navy-800 focus:bg-white focus:border-teal-500 focus:outline-none"
           />
         </div>
 
         {/* Submit Button */}
-        <div className="flex justify-end">
+        <div className="flex justify-end pt-2">
           <button
             type="submit"
             disabled={loading}
-            className="inline-flex items-center space-x-2 px-8 py-3.5 rounded-xl bg-gradient-to-r from-sky-500 to-teal-500 hover:from-sky-400 hover:to-teal-400 text-white font-bold text-sm shadow-lg transition-all disabled:opacity-50"
+            className="inline-flex items-center space-x-2 px-8 py-3 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-semibold text-sm shadow-sm transition-colors disabled:opacity-50"
           >
             {loading ? (
               <>

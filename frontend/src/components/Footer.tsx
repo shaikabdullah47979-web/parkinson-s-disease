@@ -1,58 +1,58 @@
 import React from 'react';
-import { ShieldCheck, ExternalLink, Code2 } from 'lucide-react';
+import { ShieldCheck, ExternalLink } from 'lucide-react';
 
 export const Footer: React.FC = () => {
   return (
-    <footer className="bg-slate-950 border-t border-slate-800/80 text-slate-400 py-10 mt-20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-sm">
-          {/* Col 1 */}
-          <div className="space-y-3">
-            <div className="flex items-center space-x-2 text-white font-semibold">
-              <ShieldCheck className="w-5 h-5 text-sky-400" />
-              <span>NeuroVoice ML Research Platform</span>
+    <footer className="bg-white border-t border-slate-200 text-slate-500 py-8 mt-16">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
+          {/* Col 1: Platform Overview */}
+          <div className="space-y-2">
+            <div className="flex items-center space-x-2 text-navy-800 font-semibold">
+              <ShieldCheck className="w-5 h-5 text-teal-600" />
+              <span>NeuroVoice Clinical ML Platform</span>
             </div>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              An educational and research machine learning system demonstrating voice dysphonia feature engineering,
-              subject-aware cross-validation, and predictive classification.
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Biomedical machine learning system demonstrating voice perturbation feature extraction,
+              subject-aware cross-validation, and browser-side kinematic telemetry.
             </p>
           </div>
 
-          {/* Col 2 */}
-          <div className="space-y-2">
-            <h5 className="text-white font-medium text-xs tracking-wider uppercase">Authoritative Citation</h5>
-            <p className="text-xs text-slate-400 leading-relaxed italic">
-              Little MA, McSharry PE, Roberts SJ, Costello DAE, Moroz IM. "Suitability of dysphonia measurements for telemonitoring of Parkinson's disease", IEEE Transactions on Biomedical Engineering, 2008.
+          {/* Col 2: Authoritative Citation */}
+          <div className="space-y-1.5">
+            <h5 className="text-navy-800 font-semibold text-xs tracking-wider uppercase">Authoritative Citation</h5>
+            <p className="text-xs text-slate-600 leading-relaxed italic">
+              Little MA, McSharry PE, Roberts SJ, Costello DAE, Moroz IM. "Suitability of dysphonia measurements for telemonitoring of Parkinson's disease", IEEE TBME, 2008.
             </p>
             <a
               href="https://archive.ics.uci.edu/dataset/174/parkinsons"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center space-x-1 text-xs text-sky-400 hover:text-sky-300 transition-colors pt-1"
+              className="inline-flex items-center space-x-1 text-xs text-teal-700 hover:text-teal-800 font-medium transition-colors pt-1"
             >
               <span>UCI Machine Learning Repository</span>
               <ExternalLink className="w-3 h-3" />
             </a>
           </div>
 
-          {/* Col 3 */}
-          <div className="space-y-2">
-            <h5 className="text-white font-medium text-xs tracking-wider uppercase">System Architecture</h5>
-            <ul className="text-xs text-slate-400 space-y-1">
-              <li className="flex items-center gap-1.5"><Code2 className="w-3.5 h-3.5 text-teal-400" /> Frontend: React 18 + TypeScript + Vite + Tailwind</li>
-              <li className="flex items-center gap-1.5"><Code2 className="w-3.5 h-3.5 text-teal-400" /> Backend: FastAPI + Pydantic + Uvicorn</li>
-              <li className="flex items-center gap-1.5"><Code2 className="w-3.5 h-3.5 text-teal-400" /> ML: Scikit-learn (Subject-Grouped Validation)</li>
-              <li className="flex items-center gap-1.5"><Code2 className="w-3.5 h-3.5 text-teal-400" /> Persistence: SQLAlchemy + SQLite (Relational)</li>
-            </ul>
+          {/* Col 3: Architecture & Integrity */}
+          <div className="space-y-1.5">
+            <h5 className="text-navy-800 font-semibold text-xs tracking-wider uppercase">Research Integrity</h5>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Trained strictly on Subject-Grouped splits (GroupKFold) preventing record leakage.
+              Kinematics evaluated via Welch PSD, Butterworth filtering, and SPARC algorithms.
+            </p>
+            <span className="text-[11px] text-slate-500 block pt-1">
+              FastAPI • Scikit-Learn • React • MediaPipe Tasks
+            </span>
           </div>
         </div>
 
-        <div className="pt-6 border-t border-slate-800/60 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-4">
-          <p>© 2026 NeuroVoice Educational ML Project. For educational and research purposes only.</p>
-          <p className="text-amber-400/80 font-medium">Experimental Prototype • Not for Clinical Diagnosis</p>
+        <div className="border-t border-slate-100 pt-4 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-2">
+          <p>© {new Date().getFullYear()} NeuroVoice Research Project. Developed for academic and clinical research purposes.</p>
+          <p className="text-slate-500">Confidential Research Telemetry</p>
         </div>
       </div>
     </footer>
   );
 };
-
