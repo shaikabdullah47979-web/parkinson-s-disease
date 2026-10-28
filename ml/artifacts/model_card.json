@@ -1,0 +1,211 @@
+{
+  "model_name": "Gradient Boosting Classifier",
+  "artifact_file": "best_model.joblib",
+  "training_timestamp_utc": "2026-10-27T20:55:28.890163+00:00",
+  "algorithm_family": "GradientBoostingClassifier",
+  "dataset_name": "UCI Parkinson's Disease Voice Dataset",
+  "target_variable": "status",
+  "classes": {
+    "0": "Healthy Control",
+    "1": "Parkinson's Disease (Dysphonia Classified)"
+  },
+  "features": [
+    "MDVP:Fo(Hz)",
+    "MDVP:Fhi(Hz)",
+    "MDVP:Flo(Hz)",
+    "MDVP:Jitter(%)",
+    "MDVP:Jitter(Abs)",
+    "MDVP:RAP",
+    "MDVP:PPQ",
+    "Jitter:DDP",
+    "MDVP:Shimmer",
+    "MDVP:Shimmer(dB)",
+    "Shimmer:APQ3",
+    "Shimmer:APQ5",
+    "MDVP:APQ",
+    "Shimmer:DDA",
+    "NHR",
+    "HNR",
+    "RPDE",
+    "DFA",
+    "spread1",
+    "spread2",
+    "D2",
+    "PPE"
+  ],
+  "feature_count": 22,
+  "validation_strategy": "GroupShuffleSplit (Holdout unseen subjects) + StratifiedGroupKFold (CV)",
+  "train_samples": 146,
+  "test_samples": 49,
+  "train_subjects": 24,
+  "test_subjects": 8,
+  "test_metrics": {
+    "accuracy": 0.7755102040816326,
+    "precision": 0.7708333333333334,
+    "recall_sensitivity": 1.0,
+    "specificity": 0.08333333333333333,
+    "f1_score": 0.8705882352941177,
+    "roc_auc": 0.7736486486486487,
+    "confusion_matrix": {
+      "true_negative": 1,
+      "false_positive": 11,
+      "false_negative": 0,
+      "true_positive": 37
+    }
+  },
+  "cross_validation_results": {
+    "Logistic Regression (Baseline)": {
+      "cv_accuracy": 0.8020050580534451,
+      "cv_recall": 0.8633333333333334,
+      "cv_specificity": 0.6666666666666667,
+      "cv_f1": 0.8670405240863646,
+      "cv_auc": 0.8538888888888889
+    },
+    "Support Vector Machine (RBF)": {
+      "cv_accuracy": 0.836667600780504,
+      "cv_recall": 0.9166666666666667,
+      "cv_specificity": 0.625,
+      "cv_f1": 0.892596222380613,
+      "cv_auc": 0.8027777777777778
+    },
+    "Random Forest Classifier": {
+      "cv_accuracy": 0.8088898230027262,
+      "cv_recall": 0.9166666666666667,
+      "cv_specificity": 0.45833333333333337,
+      "cv_f1": 0.8779682274247491,
+      "cv_auc": 0.8302777777777779
+    },
+    "Gradient Boosting Classifier": {
+      "cv_accuracy": 0.7706196980390528,
+      "cv_recall": 0.8200000000000001,
+      "cv_specificity": 0.6458333333333334,
+      "cv_f1": 0.8368519077821404,
+      "cv_auc": 0.8155555555555555
+    }
+  },
+  "all_candidate_test_metrics": {
+    "Logistic Regression (Baseline)": {
+      "accuracy": 0.6326530612244898,
+      "precision": 0.7209302325581395,
+      "recall_sensitivity": 0.8378378378378378,
+      "specificity": 0.0,
+      "f1_score": 0.775,
+      "roc_auc": 0.6328828828828829,
+      "confusion_matrix": {
+        "true_negative": 0,
+        "false_positive": 12,
+        "false_negative": 6,
+        "true_positive": 31
+      }
+    },
+    "Support Vector Machine (RBF)": {
+      "accuracy": 0.673469387755102,
+      "precision": 0.7333333333333333,
+      "recall_sensitivity": 0.8918918918918919,
+      "specificity": 0.0,
+      "f1_score": 0.8048780487804879,
+      "roc_auc": 0.3761261261261261,
+      "confusion_matrix": {
+        "true_negative": 0,
+        "false_positive": 12,
+        "false_negative": 4,
+        "true_positive": 33
+      }
+    },
+    "Random Forest Classifier": {
+      "accuracy": 0.7142857142857143,
+      "precision": 0.7446808510638298,
+      "recall_sensitivity": 0.9459459459459459,
+      "specificity": 0.0,
+      "f1_score": 0.8333333333333334,
+      "roc_auc": 0.722972972972973,
+      "confusion_matrix": {
+        "true_negative": 0,
+        "false_positive": 12,
+        "false_negative": 2,
+        "true_positive": 35
+      }
+    },
+    "Gradient Boosting Classifier": {
+      "accuracy": 0.7755102040816326,
+      "precision": 0.7708333333333334,
+      "recall_sensitivity": 1.0,
+      "specificity": 0.08333333333333333,
+      "f1_score": 0.8705882352941177,
+      "roc_auc": 0.7736486486486487,
+      "confusion_matrix": {
+        "true_negative": 1,
+        "false_positive": 11,
+        "false_negative": 0,
+        "true_positive": 37
+      }
+    }
+  },
+  "top_features": [
+    [
+      "spread1",
+      0.5611888122096786
+    ],
+    [
+      "MDVP:Fo(Hz)",
+      0.12943355507901605
+    ],
+    [
+      "RPDE",
+      0.08404987226337982
+    ],
+    [
+      "spread2",
+      0.06341804690428597
+    ],
+    [
+      "MDVP:Fhi(Hz)",
+      0.05882769790041267
+    ],
+    [
+      "D2",
+      0.04782536798223841
+    ],
+    [
+      "PPE",
+      0.026322487027628898
+    ],
+    [
+      "HNR",
+      0.006917178582622057
+    ],
+    [
+      "Shimmer:DDA",
+      0.0035785847491753412
+    ],
+    [
+      "Shimmer:APQ3",
+      0.0030279980728257815
+    ]
+  ],
+  "all_feature_importances": {
+    "spread1": 0.5611888122096786,
+    "MDVP:Fo(Hz)": 0.12943355507901605,
+    "RPDE": 0.08404987226337982,
+    "spread2": 0.06341804690428597,
+    "MDVP:Fhi(Hz)": 0.05882769790041267,
+    "D2": 0.04782536798223841,
+    "PPE": 0.026322487027628898,
+    "HNR": 0.006917178582622057,
+    "Shimmer:DDA": 0.0035785847491753412,
+    "Shimmer:APQ3": 0.0030279980728257815,
+    "MDVP:Flo(Hz)": 0.0028359234288095818,
+    "MDVP:Jitter(%)": 0.002461246721703031,
+    "NHR": 0.002318436348275085,
+    "Jitter:DDP": 0.001841540560638559,
+    "DFA": 0.0011496354478319761,
+    "MDVP:Jitter(Abs)": 0.0011352351101336778,
+    "MDVP:PPQ": 0.001108522236838202,
+    "Shimmer:APQ5": 0.000802459317510862,
+    "MDVP:APQ": 0.0006559888537830639,
+    "MDVP:Shimmer(dB)": 0.0005850641472173265,
+    "MDVP:RAP": 0.0003191542740208646,
+    "MDVP:Shimmer": 0.00019719278197418273
+  },
+  "disclaimer": "This model is an educational and research prototype trained on sustained vowel recordings. It is not approved or calibrated for clinical diagnostic use."
+}
