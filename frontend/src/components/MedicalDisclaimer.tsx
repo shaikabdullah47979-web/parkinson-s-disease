@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShieldAlert } from 'lucide-react';
+import { AlertCircle, ShieldAlert } from 'lucide-react';
 
 interface Props {
   compact?: boolean;
@@ -8,10 +8,10 @@ interface Props {
 export const MedicalDisclaimer: React.FC<Props> = ({ compact = false }) => {
   if (compact) {
     return (
-      <div className="bg-amber-50/90 border border-amber-200 rounded-xl p-3 text-xs text-amber-900 flex items-center space-x-2.5 shadow-xs">
-        <ShieldAlert className="w-4 h-4 text-amber-600 shrink-0" />
-        <p>
-          <strong className="font-semibold text-amber-950">Research Screening Prototype:</strong> Outputs are computational classifications based on experimental biomedical telemetry and do not constitute a clinical medical diagnosis.
+      <div className="p-3.5 sm:p-4 rounded-xl bg-[#fffbeb] border border-amber-200 text-amber-900 text-xs flex items-center gap-3 shadow-xs">
+        <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+        <p className="leading-relaxed">
+          <strong>Research Screening Prototype:</strong> Outputs are computational classifications based on experimental biomedical telemetry and do not constitute a medical diagnosis or a substitute for assessment by a qualified healthcare professional.
         </p>
       </div>
     );

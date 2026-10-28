@@ -1,18 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  Activity,
   Database,
   Brain,
   CheckCircle2,
   AlertTriangle,
   ArrowRight,
   TrendingUp,
-  Layers,
   RefreshCw,
   Footprints,
   History,
-  ShieldCheck,
+  LayoutDashboard,
   Award
 } from 'lucide-react';
 import { api } from '../services/api';
@@ -56,28 +54,45 @@ export const DashboardPage: React.FC = () => {
   const healthyCount = historyRecords.filter((r) => r.prediction_label === 0).length;
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto pb-10">
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
-            Research Dashboard
-          </h1>
-          <p className="text-sm text-slate-500 mt-0.5">
-            Monitor model evaluation, dataset quality, and voice and movement research workflows.
-          </p>
+    <div className="space-y-6 max-w-6xl mx-auto pb-12">
+      {/* 1. Main Page Header */}
+      <div>
+        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
+          Research Dashboard & Analytics
+        </h1>
+        <p className="text-sm text-slate-500 mt-1">
+          Monitor model evaluation, dataset quality, and voice and movement research workflows
+        </p>
+      </div>
+
+      {/* 2. Section Heading matching reference */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-1">
+        <div className="flex items-start gap-3">
+          <div className="w-10 h-10 rounded-xl bg-cyan-100 text-cyan-600 flex items-center justify-center shrink-0 mt-0.5 shadow-xs">
+            <LayoutDashboard className="w-5 h-5 text-cyan-600" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold text-[#0ea5e9] tracking-tight">
+              Clinical Telemetry & Analytics Overview
+            </h2>
+            <p className="text-sm text-slate-600 mt-0.5 max-w-3xl leading-relaxed">
+              Real-time model performance benchmarks, held-out validation cohorts, and persisted screening session telemetry.
+            </p>
+          </div>
         </div>
 
+        {/* Refresh Action */}
         <button
           onClick={fetchDashboardData}
           disabled={loading}
-          className="inline-flex items-center space-x-2 px-3.5 py-2 rounded-xl bg-white hover:bg-sky-50 text-slate-700 text-xs font-semibold border border-slate-200 shadow-xs transition-colors self-start sm:self-auto"
+          className="inline-flex items-center space-x-2 px-3.5 py-2 rounded-xl bg-white hover:bg-sky-50 text-slate-700 text-xs font-semibold border border-[#E0EFFA] shadow-xs transition-colors self-start sm:self-center"
         >
           <RefreshCw className={`w-3.5 h-3.5 text-cyan-600 ${loading ? 'animate-spin' : ''}`} />
-          <span>Refresh Data</span>
+          <span>Refresh Telemetry</span>
         </button>
       </div>
 
+      {/* 3. Research Screening Disclaimer Banner */}
       <MedicalDisclaimer compact />
 
       {error && (
@@ -90,22 +105,22 @@ export const DashboardPage: React.FC = () => {
       {loading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 animate-pulse">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-32 bg-white rounded-2xl border border-slate-200 shadow-xs" />
+            <div key={i} className="h-32 bg-white rounded-2xl border border-[#E0EFFA] shadow-xs" />
           ))}
         </div>
       ) : (
         <>
-          {/* Key Metric Section (4 Cards) */}
+          {/* 4. Four Key Telemetry Cards (horizontally aligned) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Card 1: Active Model */}
-            <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-2 shadow-xs">
+            <div className="bg-white border border-[#E0EFFA] rounded-2xl p-5 space-y-2 shadow-xs hover:border-cyan-300 transition-all">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                  Active Model
+                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                  Active ML Pipeline
                 </span>
                 <Brain className="w-4 h-4 text-cyan-600" />
               </div>
-              <div className="text-base font-bold text-slate-900 truncate" title={modelStatus?.model_name || 'N/A'}>
+              <div className="text-base font-bold text-slate-900 truncate" title={modelStatus?.model_name || 'Gradient Boosting'}>
                 {modelStatus?.model_name || 'Gradient Boosting'}
               </div>
               <div className="flex items-center space-x-1.5 text-xs text-emerald-700 font-medium">
@@ -115,9 +130,9 @@ export const DashboardPage: React.FC = () => {
             </div>
 
             {/* Card 2: Sensitivity (Recall) */}
-            <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-2 shadow-xs">
+            <div className="bg-white border border-[#E0EFFA] rounded-2xl p-5 space-y-2 shadow-xs hover:border-cyan-300 transition-all">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
                   Test Sensitivity (Recall)
                 </span>
                 <TrendingUp className="w-4 h-4 text-cyan-600" />
@@ -129,9 +144,9 @@ export const DashboardPage: React.FC = () => {
             </div>
 
             {/* Card 3: Test F1-Score */}
-            <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-2 shadow-xs">
+            <div className="bg-white border border-[#E0EFFA] rounded-2xl p-5 space-y-2 shadow-xs hover:border-cyan-300 transition-all">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
                   Test F1-Score
                 </span>
                 <Award className="w-4 h-4 text-cyan-600" />
@@ -143,9 +158,9 @@ export const DashboardPage: React.FC = () => {
             </div>
 
             {/* Card 4: Persisted Assessments */}
-            <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-2 shadow-xs">
+            <div className="bg-white border border-[#E0EFFA] rounded-2xl p-5 space-y-2 shadow-xs hover:border-cyan-300 transition-all">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
                   Logged Inferences
                 </span>
                 <History className="w-4 h-4 text-cyan-600" />
@@ -157,11 +172,11 @@ export const DashboardPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Model Evaluation & Dataset Analytics Grid */}
+          {/* 5. Model Evaluation & Dataset Analytics Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Left: Model Performance Breakdown */}
-            <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-5 shadow-xs">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div className="bg-white border border-[#E0EFFA] rounded-2xl p-6 space-y-5 shadow-xs">
+              <div className="flex items-center justify-between border-b border-[#E0EFFA] pb-3">
                 <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
                   <Brain className="w-4 h-4 text-cyan-600" />
                   <span>Held-Out Cohort ML Validation (Unseen Subjects)</span>
@@ -178,19 +193,19 @@ export const DashboardPage: React.FC = () => {
               {modelMetrics && (
                 <div className="space-y-4">
                   <div className="grid grid-cols-3 gap-3 text-center">
-                    <div className="bg-[#F0F8FF] p-3 rounded-xl border border-sky-200/80">
+                    <div className="bg-[#F0F8FF] p-3 rounded-xl border border-[#E0EFFA]">
                       <div className="text-xs text-slate-500 font-medium">Test Accuracy</div>
                       <div className="text-lg font-bold text-slate-900 mt-0.5 font-mono">
                         {(modelMetrics.test_metrics.accuracy * 100).toFixed(1)}%
                       </div>
                     </div>
-                    <div className="bg-[#F0F8FF] p-3 rounded-xl border border-sky-200/80">
+                    <div className="bg-[#F0F8FF] p-3 rounded-xl border border-[#E0EFFA]">
                       <div className="text-xs text-slate-500 font-medium">Specificity</div>
                       <div className="text-lg font-bold text-slate-900 mt-0.5 font-mono">
                         {(modelMetrics.test_metrics.specificity * 100).toFixed(1)}%
                       </div>
                     </div>
-                    <div className="bg-[#F0F8FF] p-3 rounded-xl border border-sky-200/80">
+                    <div className="bg-[#F0F8FF] p-3 rounded-xl border border-[#E0EFFA]">
                       <div className="text-xs text-slate-500 font-medium">ROC-AUC</div>
                       <div className="text-lg font-bold text-[#0ea5e9] mt-0.5 font-mono">
                         {modelMetrics.test_metrics.roc_auc ? modelMetrics.test_metrics.roc_auc.toFixed(3) : 'N/A'}
@@ -198,30 +213,30 @@ export const DashboardPage: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="bg-slate-50 rounded-xl p-4 border border-slate-200 space-y-2">
+                  <div className="bg-slate-50/70 rounded-xl p-4 border border-[#E0EFFA] space-y-2.5">
                     <div className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">
                       Held-Out Confusion Matrix (49 Phonation Test Samples)
                     </div>
                     <div className="grid grid-cols-2 gap-2 text-xs">
-                      <div className="p-2.5 rounded-lg bg-white border border-slate-200 shadow-xs">
+                      <div className="p-2.5 rounded-lg bg-white border border-[#E0EFFA] shadow-xs">
                         <span className="text-slate-500 block text-[11px]">True Negatives (Healthy):</span>
                         <strong className="text-slate-900 text-sm font-mono">
                           {modelMetrics.test_metrics.confusion_matrix.true_negative}
                         </strong>
                       </div>
-                      <div className="p-2.5 rounded-lg bg-white border border-slate-200 shadow-xs">
+                      <div className="p-2.5 rounded-lg bg-white border border-[#E0EFFA] shadow-xs">
                         <span className="text-slate-500 block text-[11px]">False Positives:</span>
                         <strong className="text-amber-700 text-sm font-mono">
                           {modelMetrics.test_metrics.confusion_matrix.false_positive}
                         </strong>
                       </div>
-                      <div className="p-2.5 rounded-lg bg-white border border-slate-200 shadow-xs">
+                      <div className="p-2.5 rounded-lg bg-white border border-[#E0EFFA] shadow-xs">
                         <span className="text-slate-500 block text-[11px]">False Negatives (Missed):</span>
                         <strong className="text-emerald-700 text-sm font-mono">
                           {modelMetrics.test_metrics.confusion_matrix.false_negative}
                         </strong>
                       </div>
-                      <div className="p-2.5 rounded-lg bg-white border border-slate-200 shadow-xs">
+                      <div className="p-2.5 rounded-lg bg-white border border-[#E0EFFA] shadow-xs">
                         <span className="text-slate-500 block text-[11px]">True Positives (Parkinson's):</span>
                         <strong className="text-cyan-700 text-sm font-mono">
                           {modelMetrics.test_metrics.confusion_matrix.true_positive}
@@ -234,8 +249,8 @@ export const DashboardPage: React.FC = () => {
             </div>
 
             {/* Right: Dataset Provenance & Real Activity Distribution */}
-            <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-5 shadow-xs">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div className="bg-white border border-[#E0EFFA] rounded-2xl p-6 space-y-5 shadow-xs">
+              <div className="flex items-center justify-between border-b border-[#E0EFFA] pb-3">
                 <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
                   <Database className="w-4 h-4 text-cyan-600" />
                   <span>Dataset Provenance & Activity Distribution</span>
@@ -250,7 +265,7 @@ export const DashboardPage: React.FC = () => {
               </div>
 
               {/* Logged Assessment Breakdown */}
-              <div className="p-3.5 rounded-xl bg-[#F0F8FF] border border-sky-200/80 space-y-2 text-xs">
+              <div className="p-3.5 rounded-xl bg-[#F0F8FF] border border-[#E0EFFA] space-y-2 text-xs">
                 <span className="font-semibold text-slate-700 block text-xs">
                   Recorded Inferences Summary ({historyRecords.length} Total)
                 </span>
@@ -258,12 +273,12 @@ export const DashboardPage: React.FC = () => {
                   <p className="text-slate-500 text-[11px]">No assessments recorded yet in local database.</p>
                 ) : (
                   <div className="grid grid-cols-2 gap-2 text-center pt-1">
-                    <div className="p-2 bg-white rounded-lg border border-slate-200">
-                      <span className="text-slate-400 block text-[10px] uppercase">Parkinson's Detected</span>
+                    <div className="p-2.5 bg-white rounded-lg border border-[#E0EFFA] shadow-xs">
+                      <span className="text-slate-400 block text-[10px] uppercase font-bold">Parkinson's Detected</span>
                       <strong className="text-amber-700 font-mono text-sm">{pdCount}</strong>
                     </div>
-                    <div className="p-2 bg-white rounded-lg border border-slate-200">
-                      <span className="text-slate-400 block text-[10px] uppercase">Healthy / Negative</span>
+                    <div className="p-2.5 bg-white rounded-lg border border-[#E0EFFA] shadow-xs">
+                      <span className="text-slate-400 block text-[10px] uppercase font-bold">Healthy / Negative</span>
                       <strong className="text-emerald-700 font-mono text-sm">{healthyCount}</strong>
                     </div>
                   </div>
@@ -290,7 +305,7 @@ export const DashboardPage: React.FC = () => {
               <div className="pt-2 flex flex-col sm:flex-row gap-2.5">
                 <Link
                   to="/predict"
-                  className="flex-1 flex items-center justify-center space-x-2 py-2 px-3.5 rounded-xl bg-gradient-to-r from-cyan-500 to-sky-500 hover:from-cyan-600 hover:to-sky-600 text-white font-semibold text-xs transition-colors shadow-xs"
+                  className="flex-1 flex items-center justify-center space-x-2 py-2.5 px-3.5 rounded-xl bg-gradient-to-r from-cyan-400 to-sky-500 hover:from-cyan-500 hover:to-sky-600 text-white font-semibold text-xs transition-all shadow-glow-pill"
                 >
                   <Brain className="w-4 h-4" />
                   <span>Launch Voice Predictor</span>
@@ -298,7 +313,7 @@ export const DashboardPage: React.FC = () => {
 
                 <Link
                   to="/movement"
-                  className="flex-1 flex items-center justify-center space-x-2 py-2 px-3.5 rounded-xl bg-white hover:bg-sky-50 text-cyan-800 border border-sky-200 font-semibold text-xs transition-colors shadow-xs"
+                  className="flex-1 flex items-center justify-center space-x-2 py-2.5 px-3.5 rounded-xl bg-white hover:bg-sky-50 text-cyan-800 border border-[#E0EFFA] font-semibold text-xs transition-colors shadow-xs"
                 >
                   <Footprints className="w-4 h-4 text-cyan-600" />
                   <span>Live Movement Battery</span>

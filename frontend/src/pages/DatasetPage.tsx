@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Database, Search, ExternalLink, Layers } from 'lucide-react';
+import { Database, Search, ExternalLink, Layers, CheckCircle2 } from 'lucide-react';
 import { api } from '../services/api';
 import { DatasetStatus, FeatureDescription } from '../types';
 import { MedicalDisclaimer } from '../components/MedicalDisclaimer';
@@ -39,37 +39,61 @@ export const DatasetPage: React.FC = () => {
   });
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto pb-10">
-      {/* Title */}
-      <div className="flex items-start gap-3">
-        <div className="w-10 h-10 rounded-xl bg-cyan-100 text-cyan-600 flex items-center justify-center shrink-0 mt-0.5 shadow-xs">
-          <Database className="w-5 h-5 text-cyan-600" />
+    <div className="space-y-6 max-w-6xl mx-auto pb-12">
+      {/* 1. Main Page Header */}
+      <div>
+        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
+          UCI Dataset Provenance & Features
+        </h1>
+        <p className="text-sm text-slate-500 mt-1">
+          Detailed exploration of the authoritative UCI Parkinson's Telemonitoring Acoustic Dataset
+        </p>
+      </div>
+
+      {/* 2. Section Heading matching reference */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-1">
+        <div className="flex items-start gap-3">
+          <div className="w-10 h-10 rounded-xl bg-cyan-100 text-cyan-600 flex items-center justify-center shrink-0 mt-0.5 shadow-xs">
+            <Database className="w-5 h-5 text-cyan-600" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold text-[#0ea5e9] tracking-tight">
+              Biomedical Phonation Repository
+            </h2>
+            <p className="text-sm text-slate-600 mt-0.5 max-w-3xl leading-relaxed">
+              195 sustained phonation recordings across 32 unique subjects with 22 biomedical dysphonia measurements and 0 missing values.
+            </p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
-            Biomedical Voice Dataset Documentation
-          </h1>
-          <p className="text-sm text-slate-500 mt-0.5">
-            Detailed exploration of the authoritative UCI Parkinson's Telemonitoring Acoustic Dataset.
-          </p>
+
+        {/* Dataset Pill */}
+        <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white border border-[#E0EFFA] text-xs shadow-xs shrink-0 self-start sm:self-center">
+          <Layers className="w-4 h-4 text-cyan-600" />
+          <span className="text-slate-600">Archive Status:</span>
+          <strong className="text-slate-900 font-semibold">{status?.row_count || 195} Records</strong>
+          <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+            <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+            <span>VERIFIED</span>
+          </span>
         </div>
       </div>
 
+      {/* 3. Research Screening Disclaimer Banner */}
       <MedicalDisclaimer compact />
 
-      {/* Dataset Metadata Summary Card */}
+      {/* 4. Dataset Metadata Summary Card */}
       {status && (
-        <div className="bg-[#F0F8FF] border border-sky-200/90 rounded-2xl p-6 space-y-5 shadow-xs">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-sky-200/60 pb-4">
+        <div className="bg-[#F0F8FF] border border-[#E0EFFA] rounded-2xl p-6 space-y-5 shadow-xs">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#E0EFFA] pb-4">
             <div>
-              <span className="text-xs uppercase font-bold text-cyan-700 tracking-wider">Authoritative Source</span>
-              <h2 className="text-xl font-bold text-slate-900 mt-0.5">{status.dataset_name}</h2>
+              <span className="text-[11px] uppercase font-bold text-cyan-700 tracking-wider">Authoritative Source</span>
+              <h3 className="text-xl font-bold text-slate-900 mt-0.5">{status.dataset_name}</h3>
             </div>
             <a
               href={status.source_url || 'https://archive.ics.uci.edu/dataset/174/parkinsons'}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-white border border-sky-200 text-cyan-800 text-xs font-semibold hover:bg-sky-50 transition-colors self-start md:self-auto shadow-xs"
+              className="inline-flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl bg-white border border-[#E0EFFA] text-cyan-800 text-xs font-semibold hover:bg-sky-50 transition-colors self-start md:self-auto shadow-xs"
             >
               <span>UCI Archive Portal</span>
               <ExternalLink className="w-3.5 h-3.5" />
@@ -77,25 +101,25 @@ export const DatasetPage: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
-            <div className="p-3.5 bg-white rounded-xl border border-slate-200 shadow-xs">
+            <div className="p-3.5 bg-white rounded-xl border border-[#E0EFFA] shadow-xs">
               <span className="text-slate-400 font-bold uppercase tracking-wider block text-[10px]">Total Records</span>
               <strong className="text-xl text-slate-900 font-mono font-bold mt-1 block">{status.row_count}</strong>
               <span className="text-slate-500 text-[11px] block">phonation recordings</span>
             </div>
 
-            <div className="p-3.5 bg-white rounded-xl border border-slate-200 shadow-xs">
+            <div className="p-3.5 bg-white rounded-xl border border-[#E0EFFA] shadow-xs">
               <span className="text-slate-400 font-bold uppercase tracking-wider block text-[10px]">Unique Subjects</span>
               <strong className="text-xl text-slate-900 font-mono font-bold mt-1 block">{status.unique_subjects}</strong>
               <span className="text-slate-500 text-[11px] block">patients & controls</span>
             </div>
 
-            <div className="p-3.5 bg-white rounded-xl border border-slate-200 shadow-xs">
+            <div className="p-3.5 bg-white rounded-xl border border-[#E0EFFA] shadow-xs">
               <span className="text-slate-400 font-bold uppercase tracking-wider block text-[10px]">Class Distribution</span>
               <strong className="text-xl text-slate-900 font-mono font-bold mt-1 block">147 PD : 48 Ctrl</strong>
               <span className="text-slate-500 text-[11px] block">75.4% positive class</span>
             </div>
 
-            <div className="p-3.5 bg-white rounded-xl border border-slate-200 shadow-xs">
+            <div className="p-3.5 bg-white rounded-xl border border-[#E0EFFA] shadow-xs">
               <span className="text-slate-400 font-bold uppercase tracking-wider block text-[10px]">Missing Values</span>
               <strong className="text-xl text-emerald-700 font-mono font-bold mt-1 block">0</strong>
               <span className="text-slate-500 text-[11px] block">clean dataset</span>
@@ -110,7 +134,7 @@ export const DatasetPage: React.FC = () => {
         </div>
       )}
 
-      {/* Feature Dictionary */}
+      {/* 5. Feature Dictionary */}
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
@@ -127,7 +151,7 @@ export const DatasetPage: React.FC = () => {
                 placeholder="Search features..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="pl-8 pr-3 py-1.5 text-xs bg-white border border-slate-300 rounded-lg text-slate-900 placeholder-slate-400 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/20 focus:outline-none w-48 shadow-xs"
+                className="pl-8 pr-3 py-1.5 text-xs bg-white border border-[#E0EFFA] rounded-xl text-slate-900 placeholder-slate-400 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/20 focus:outline-none w-48 shadow-xs"
               />
             </div>
 
@@ -135,7 +159,7 @@ export const DatasetPage: React.FC = () => {
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="text-xs bg-white border border-slate-300 rounded-lg px-3 py-1.5 text-slate-700 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/20 focus:outline-none shadow-xs font-medium"
+              className="text-xs bg-white border border-[#E0EFFA] rounded-xl px-3 py-1.5 text-slate-700 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/20 focus:outline-none shadow-xs font-medium"
             >
               {categories.map((c) => (
                 <option key={c} value={c}>{c}</option>
@@ -147,10 +171,10 @@ export const DatasetPage: React.FC = () => {
         {loading ? (
           <div className="py-12 text-center text-slate-500 text-xs">Loading feature specifications...</div>
         ) : (
-          <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xs">
+          <div className="bg-white border border-[#E0EFFA] rounded-2xl overflow-hidden shadow-xs">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
-                <thead className="bg-[#F0F8FF] text-slate-600 uppercase text-[11px] border-b border-sky-200">
+                <thead className="bg-[#F0F8FF] text-slate-600 uppercase text-[11px] border-b border-[#E0EFFA]">
                   <tr>
                     <th className="py-3 px-4 font-semibold">Feature Column</th>
                     <th className="py-3 px-4 font-semibold">Category</th>
@@ -165,7 +189,7 @@ export const DatasetPage: React.FC = () => {
                     <tr key={f.name} className="hover:bg-slate-50 transition-colors">
                       <td className="py-3 px-4 font-mono font-semibold text-[#0ea5e9]">{f.name}</td>
                       <td className="py-3 px-4">
-                        <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-sky-50 border border-sky-200 text-cyan-800">
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-sky-50 border border-[#E0EFFA] text-cyan-800">
                           {f.category}
                         </span>
                       </td>

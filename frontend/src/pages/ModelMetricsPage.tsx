@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { BarChart3, Brain, Award, Layers, Zap, Info, CheckCircle2 } from 'lucide-react';
+import { BarChart3, Brain, Award, Layers, Zap, Info, CheckCircle2, ShieldCheck } from 'lucide-react';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell } from 'recharts';
 import { api } from '../services/api';
 import { ModelMetrics } from '../types';
@@ -52,29 +52,52 @@ export const ModelMetricsPage: React.FC = () => {
   }));
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto pb-10">
-      {/* Title */}
-      <div className="flex items-start gap-3">
-        <div className="w-10 h-10 rounded-xl bg-cyan-100 text-cyan-600 flex items-center justify-center shrink-0 mt-0.5 shadow-xs">
-          <BarChart3 className="w-5 h-5 text-cyan-600" />
+    <div className="space-y-6 max-w-6xl mx-auto pb-12">
+      {/* 1. Main Page Header */}
+      <div>
+        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
+          Model Evaluation & Comparative Analysis
+        </h1>
+        <p className="text-sm text-slate-500 mt-1">
+          Rigorous held-out test benchmarks evaluated strictly across unseen participant recordings to prevent data leakage
+        </p>
+      </div>
+
+      {/* 2. Section Heading matching reference */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-1">
+        <div className="flex items-start gap-3">
+          <div className="w-10 h-10 rounded-xl bg-cyan-100 text-cyan-600 flex items-center justify-center shrink-0 mt-0.5 shadow-xs">
+            <BarChart3 className="w-5 h-5 text-cyan-600" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold text-[#0ea5e9] tracking-tight">
+              Machine Learning Benchmark Suite
+            </h2>
+            <p className="text-sm text-slate-600 mt-0.5 max-w-3xl leading-relaxed">
+              Comparative held-out evaluations across Gradient Boosting, Random Forest, SVM, and Logistic Regression on unseen patient partitions.
+            </p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
-            Model Evaluation & Comparative Analysis
-          </h1>
-          <p className="text-sm text-slate-500 mt-0.5">
-            Rigorous held-out test benchmarks evaluated strictly across unseen participant recordings to prevent data leakage.
-          </p>
+
+        {/* Algorithm Pill */}
+        <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white border border-[#E0EFFA] text-xs shadow-xs shrink-0 self-start sm:self-center">
+          <Award className="w-4 h-4 text-cyan-600" />
+          <span className="text-slate-600">Champion Model:</span>
+          <strong className="text-slate-900 font-semibold">{metrics.model_name}</strong>
+          <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+            <span>OPTIMAL</span>
+          </span>
         </div>
       </div>
 
+      {/* 3. Research Screening Disclaimer Banner */}
       <MedicalDisclaimer compact />
 
-      {/* Selected Model Champion Banner */}
-      <div className="bg-[#F0F8FF] border border-sky-200/90 rounded-2xl p-6 shadow-xs relative overflow-hidden">
+      {/* 4. Selected Model Champion Banner */}
+      <div className="bg-[#F0F8FF] border border-[#E0EFFA] rounded-2xl p-6 shadow-xs relative overflow-hidden">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="space-y-1.5">
-            <div className="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full bg-white border border-sky-200 text-cyan-800 text-xs font-semibold shadow-xs">
+            <div className="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full bg-white border border-[#E0EFFA] text-cyan-800 text-xs font-semibold shadow-xs">
               <Award className="w-3.5 h-3.5 text-cyan-600" />
               <span>Selected Champion Pipeline</span>
             </div>
@@ -85,19 +108,19 @@ export const ModelMetricsPage: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
-            <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs">
+            <div className="bg-white p-3.5 rounded-xl border border-[#E0EFFA] shadow-xs">
               <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Sensitivity</div>
               <div className="text-xl font-bold text-[#0ea5e9] mt-1 font-mono">{(tm.recall_sensitivity * 100).toFixed(1)}%</div>
             </div>
-            <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs">
+            <div className="bg-white p-3.5 rounded-xl border border-[#E0EFFA] shadow-xs">
               <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Test F1-Score</div>
               <div className="text-xl font-bold text-slate-900 mt-1 font-mono">{tm.f1_score.toFixed(3)}</div>
             </div>
-            <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs">
+            <div className="bg-white p-3.5 rounded-xl border border-[#E0EFFA] shadow-xs">
               <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Accuracy</div>
               <div className="text-xl font-bold text-slate-800 mt-1 font-mono">{(tm.accuracy * 100).toFixed(1)}%</div>
             </div>
-            <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs">
+            <div className="bg-white p-3.5 rounded-xl border border-[#E0EFFA] shadow-xs">
               <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">ROC-AUC</div>
               <div className="text-xl font-bold text-cyan-800 mt-1 font-mono">{tm.roc_auc ? tm.roc_auc.toFixed(3) : 'N/A'}</div>
             </div>
@@ -105,8 +128,8 @@ export const ModelMetricsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Candidate Comparison Table */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-4 shadow-xs">
+      {/* 5. Candidate Comparison Table */}
+      <div className="bg-white border border-[#E0EFFA] rounded-2xl p-6 space-y-4 shadow-xs">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
             <Layers className="w-4 h-4 text-cyan-600" />
@@ -115,9 +138,9 @@ export const ModelMetricsPage: React.FC = () => {
           <span className="text-xs text-slate-500">Evaluated on identical holdout partition</span>
         </div>
 
-        <div className="overflow-x-auto border border-slate-200 rounded-xl">
+        <div className="overflow-x-auto border border-[#E0EFFA] rounded-xl">
           <table className="w-full text-left text-xs">
-            <thead className="bg-[#F0F8FF] text-slate-600 uppercase text-[11px] border-b border-sky-200">
+            <thead className="bg-[#F0F8FF] text-slate-600 uppercase text-[11px] border-b border-[#E0EFFA]">
               <tr>
                 <th className="py-3 px-4 font-semibold">Candidate Pipeline</th>
                 <th className="py-3 px-4 font-semibold">Accuracy</th>
@@ -144,7 +167,7 @@ export const ModelMetricsPage: React.FC = () => {
                     <td className="py-3.5 px-4 font-mono">{cand.roc_auc ? cand.roc_auc.toFixed(3) : 'N/A'}</td>
                     <td className="py-3.5 px-4">
                       {isSelected ? (
-                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-gradient-to-r from-cyan-500 to-sky-500 text-white shadow-xs">
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-gradient-to-r from-cyan-400 to-sky-400 text-white shadow-xs">
                           Selected
                         </span>
                       ) : (
@@ -159,10 +182,10 @@ export const ModelMetricsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Confusion Matrix and Feature Importance */}
+      {/* 6. Confusion Matrix and Feature Importance */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Confusion Matrix */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-4 shadow-xs">
+        <div className="bg-white border border-[#E0EFFA] rounded-2xl p-6 space-y-4 shadow-xs">
           <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
             <Zap className="w-4 h-4 text-cyan-600" />
             <span>Confusion Matrix (Held-out Test Cohort)</span>
@@ -172,25 +195,25 @@ export const ModelMetricsPage: React.FC = () => {
           </p>
 
           <div className="grid grid-cols-2 gap-3 pt-1">
-            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+            <div className="p-4 rounded-xl bg-slate-50/70 border border-[#E0EFFA] space-y-1">
               <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">True Negatives (TN)</span>
               <div className="text-2xl font-bold text-slate-900">{cm.true_negative}</div>
               <p className="text-[11px] text-slate-500">Healthy correctly classified</p>
             </div>
 
-            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+            <div className="p-4 rounded-xl bg-slate-50/70 border border-[#E0EFFA] space-y-1">
               <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">False Positives (FP)</span>
               <div className="text-2xl font-bold text-amber-700">{cm.false_positive}</div>
               <p className="text-[11px] text-slate-500">Healthy misclassified as PD</p>
             </div>
 
-            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+            <div className="p-4 rounded-xl bg-slate-50/70 border border-[#E0EFFA] space-y-1">
               <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">False Negatives (FN)</span>
               <div className="text-2xl font-bold text-emerald-700">{cm.false_negative}</div>
               <p className="text-[11px] text-slate-500">PD missed (Zero missed cases)</p>
             </div>
 
-            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+            <div className="p-4 rounded-xl bg-slate-50/70 border border-[#E0EFFA] space-y-1">
               <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">True Positives (TP)</span>
               <div className="text-2xl font-bold text-[#0ea5e9]">{cm.true_positive}</div>
               <p className="text-[11px] text-slate-500">PD correctly classified</p>
@@ -199,7 +222,7 @@ export const ModelMetricsPage: React.FC = () => {
         </div>
 
         {/* Top Features Chart */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-4 shadow-xs">
+        <div className="bg-white border border-[#E0EFFA] rounded-2xl p-6 space-y-4 shadow-xs">
           <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
             <Brain className="w-4 h-4 text-cyan-600" />
             <span>Top Predictive Acoustic Biomarkers</span>
@@ -214,7 +237,7 @@ export const ModelMetricsPage: React.FC = () => {
                 <XAxis type="number" stroke="#94A3B8" tick={{ fontSize: 10, fill: '#64748B' }} unit="%" />
                 <YAxis dataKey="name" type="category" stroke="#94A3B8" tick={{ fontSize: 10, fill: '#1E293B' }} />
                 <Tooltip
-                  contentStyle={{ backgroundColor: '#FFFFFF', borderColor: '#E2E8F0', borderRadius: '0.75rem', fontSize: '12px', boxShadow: '0 2px 4px rgba(0,0,0,0.06)' }}
+                  contentStyle={{ backgroundColor: '#FFFFFF', borderColor: '#E0EFFA', borderRadius: '0.75rem', fontSize: '12px', boxShadow: '0 2px 4px rgba(0,0,0,0.06)' }}
                   itemStyle={{ color: '#0EA5E9' }}
                   formatter={(val: any) => [`${val}%`, 'Importance Weight']}
                 />
@@ -229,14 +252,14 @@ export const ModelMetricsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Methodological Transparency Section */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-4 text-xs leading-relaxed text-slate-700 shadow-xs">
+      {/* 7. Methodological Transparency Section */}
+      <div className="bg-white border border-[#E0EFFA] rounded-2xl p-6 space-y-4 text-xs leading-relaxed text-slate-700 shadow-xs">
         <h4 className="font-bold text-slate-900 text-sm flex items-center gap-2">
           <Info className="w-4 h-4 text-cyan-600" />
           <span>Research Methodological Transparency & Data Leakage Prevention</span>
         </h4>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-1.5 p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+          <div className="space-y-1.5 p-3.5 rounded-xl bg-slate-50/70 border border-[#E0EFFA]">
             <strong className="text-slate-900 block text-xs">Why Naive Random Splitting Is Flawed:</strong>
             <p className="text-slate-600">
               Each of the 32 participants in the UCI dataset provided ~6 sustained vowel recordings. If data is split randomly, 
@@ -244,7 +267,7 @@ export const ModelMetricsPage: React.FC = () => {
               giving fake test accuracies over 95% that fail on genuine new patients.
             </p>
           </div>
-          <div className="space-y-1.5 p-3.5 rounded-xl bg-[#F0F8FF] border border-sky-200/80">
+          <div className="space-y-1.5 p-3.5 rounded-xl bg-[#F0F8FF] border border-[#E0EFFA]">
             <strong className="text-cyan-800 block text-xs">Subject-Grouped Splitting Protocol:</strong>
             <p className="text-slate-600">
               Our pipeline employs <code className="text-cyan-700 bg-white px-1 py-0.5 rounded font-mono border border-sky-100">GroupShuffleSplit</code> and <code className="text-cyan-700 bg-white px-1 py-0.5 rounded font-mono border border-sky-100">StratifiedGroupKFold</code> grouped 

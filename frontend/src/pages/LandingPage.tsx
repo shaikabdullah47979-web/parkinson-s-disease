@@ -7,7 +7,6 @@ import {
   BarChart3,
   ShieldCheck,
   Microscope,
-  Cpu,
   Layers,
   Footprints,
   History,
@@ -45,27 +44,68 @@ export const LandingPage: React.FC = () => {
   }, []);
 
   return (
-    <div className="space-y-8 max-w-6xl mx-auto pb-10">
-      {/* 1. Welcome & Introduction Banner */}
-      <section className="relative overflow-hidden rounded-2xl bg-[#F0F8FF] border border-sky-200/90 p-6 sm:p-8 shadow-xs">
-        <div className="max-w-3xl space-y-4">
-          <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-white border border-sky-200 text-cyan-800 text-xs font-semibold shadow-xs">
+    <div className="space-y-6 max-w-6xl mx-auto pb-12">
+      {/* 1. Main Page Header */}
+      <div>
+        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
+          Clinical Overview & Research Portal
+        </h1>
+        <p className="text-sm text-slate-500 mt-1">
+          Multimodal Parkinson's disease research platform combining vocal dysphonia modeling and kinematic movement telemetry
+        </p>
+      </div>
+
+      {/* 2. Section Heading matching reference */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-1">
+        <div className="flex items-start gap-3">
+          <div className="w-10 h-10 rounded-xl bg-cyan-100 text-cyan-600 flex items-center justify-center shrink-0 mt-0.5 shadow-xs">
+            <Microscope className="w-5 h-5 text-cyan-600" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold text-[#0ea5e9] tracking-tight">
+              Multimodal Parkinson's Disease Screening Suite
+            </h2>
+            <p className="text-sm text-slate-600 mt-0.5 max-w-3xl leading-relaxed">
+              Standardized scientific research system integrating 22-dimensional vocal fold perturbation modeling with real-time computer-vision movement telemetry.
+            </p>
+          </div>
+        </div>
+
+        {/* System Ready Badge */}
+        <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white border border-[#E0EFFA] text-xs shadow-xs shrink-0 self-start sm:self-center">
+          <Sparkles className="w-4 h-4 text-cyan-600" />
+          <span className="text-slate-600">Platform Status:</span>
+          <strong className="text-slate-900 font-semibold">{health?.ml_model_ready ? 'Operational' : 'Active'}</strong>
+          <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+            <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+            <span>ONLINE</span>
+          </span>
+        </div>
+      </div>
+
+      {/* 3. Research Screening Disclaimer Banner */}
+      <MedicalDisclaimer compact />
+
+      {/* 4. Welcome Hero Banner */}
+      <section className="relative overflow-hidden rounded-2xl bg-[#F0F8FF] border border-[#E0EFFA] p-6 sm:p-7 shadow-xs">
+        <div className="max-w-3xl space-y-3.5">
+          <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-white border border-[#E0EFFA] text-cyan-800 text-xs font-semibold shadow-xs">
             <Microscope className="w-3.5 h-3.5 text-cyan-600" />
             <span>Biomedical Machine Learning & Kinematic Research</span>
           </div>
 
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">
-            Parkinson's Disease Research & Multimodal Assessment Platform
-          </h1>
+          <h3 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight leading-snug">
+            Standardized Vocal Acoustic & Motor Telemetry Analytics
+          </h3>
 
-          <p className="text-sm sm:text-base text-slate-600 leading-relaxed">
-            A standardized scientific research system integrating 22-dimensional vocal fold perturbation modeling (jitter, shimmer, and nonlinear dynamics) with real-time computer-vision movement telemetry (tremor stability, motor cadence, joint excursion, and postural stability).
+          <p className="text-sm text-slate-600 leading-relaxed">
+            NeuroVoice pairs rigorous acoustic feature classification with browser-based computer vision kinematics. The platform enforces strict subject-grouped evaluation protocols to eliminate data leakage and provide genuine clinical telemetry for movement and phonation research.
           </p>
 
           <div className="flex flex-wrap gap-3 pt-2">
             <Link
               to="/movement"
-              className="inline-flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-sky-500 hover:from-cyan-600 hover:to-sky-600 text-white font-semibold text-xs shadow-xs transition-colors"
+              className="inline-flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-cyan-400 to-sky-500 hover:from-cyan-500 hover:to-sky-600 text-white font-semibold text-xs shadow-glow-pill transition-all"
             >
               <Footprints className="w-4 h-4" />
               <span>Launch Live Movement Battery</span>
@@ -74,7 +114,7 @@ export const LandingPage: React.FC = () => {
 
             <Link
               to="/predict"
-              className="inline-flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-white hover:bg-sky-50 text-cyan-800 border border-sky-200 font-semibold text-xs transition-colors shadow-xs"
+              className="inline-flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-white hover:bg-sky-50 text-cyan-800 border border-[#E0EFFA] font-semibold text-xs transition-colors shadow-xs"
             >
               <Brain className="w-4 h-4 text-cyan-600" />
               <span>Acoustic Dysphonia Predictor</span>
@@ -82,7 +122,7 @@ export const LandingPage: React.FC = () => {
 
             <Link
               to="/dashboard"
-              className="inline-flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-semibold text-xs transition-colors shadow-xs"
+              className="inline-flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-[#E0EFFA] font-semibold text-xs transition-colors shadow-xs"
             >
               <BarChart3 className="w-4 h-4 text-slate-500" />
               <span>Analytics Dashboard</span>
@@ -91,33 +131,32 @@ export const LandingPage: React.FC = () => {
         </div>
       </section>
 
-      {/* Safety Notice */}
-      <MedicalDisclaimer compact />
-
-      {/* 2. Quick-Access Module Cards (5 Core Sections) */}
+      {/* 5. Quick-Access Module Cards (6 Core Sections) */}
       <section className="space-y-4">
-        <div>
-          <h2 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">
-            Research Modules & Quick Navigation
-          </h2>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Direct access to all verified prediction workflows, movement screening batteries, and analytical documentation.
-          </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-bold text-slate-900 tracking-tight">
+              Research Modules & Quick Navigation
+            </h3>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Direct access to all verified prediction workflows, movement screening batteries, and analytical documentation.
+            </p>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {/* Card 1: Live Movement Battery */}
           <Link
             to="/movement"
-            className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs hover:border-cyan-300 hover:shadow-card-hover transition-all flex flex-col justify-between group"
+            className="p-5 rounded-2xl bg-white border border-[#E0EFFA] shadow-xs hover:border-cyan-300 hover:shadow-card-hover transition-all flex flex-col justify-between group"
           >
             <div className="space-y-3">
-              <div className="w-10 h-10 rounded-xl bg-sky-50 text-cyan-600 flex items-center justify-center border border-sky-100 group-hover:bg-cyan-100 transition-colors">
-                <Footprints className="w-5 h-5" />
+              <div className="w-10 h-10 rounded-xl bg-cyan-50 text-cyan-600 flex items-center justify-center border border-cyan-100 group-hover:bg-cyan-100 transition-colors">
+                <Footprints className="w-5 h-5 text-cyan-600" />
               </div>
-              <h3 className="font-bold text-slate-900 text-sm group-hover:text-cyan-700 transition-colors">
+              <h4 className="font-bold text-slate-900 text-sm group-hover:text-cyan-700 transition-colors">
                 Live Movement Battery
-              </h3>
+              </h4>
               <p className="text-xs text-slate-600 leading-relaxed">
                 4-test computer-vision protocol assessing resting tremor, finger tapping cadence, arm excursion, and postural stability.
               </p>
@@ -131,15 +170,15 @@ export const LandingPage: React.FC = () => {
           {/* Card 2: Acoustic Dysphonia Predictor */}
           <Link
             to="/predict"
-            className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs hover:border-cyan-300 hover:shadow-card-hover transition-all flex flex-col justify-between group"
+            className="p-5 rounded-2xl bg-white border border-[#E0EFFA] shadow-xs hover:border-cyan-300 hover:shadow-card-hover transition-all flex flex-col justify-between group"
           >
             <div className="space-y-3">
-              <div className="w-10 h-10 rounded-xl bg-sky-50 text-cyan-600 flex items-center justify-center border border-sky-100 group-hover:bg-cyan-100 transition-colors">
-                <Brain className="w-5 h-5" />
+              <div className="w-10 h-10 rounded-xl bg-cyan-50 text-cyan-600 flex items-center justify-center border border-cyan-100 group-hover:bg-cyan-100 transition-colors">
+                <Brain className="w-5 h-5 text-cyan-600" />
               </div>
-              <h3 className="font-bold text-slate-900 text-sm group-hover:text-cyan-700 transition-colors">
+              <h4 className="font-bold text-slate-900 text-sm group-hover:text-cyan-700 transition-colors">
                 Acoustic Dysphonia Predictor
-              </h3>
+              </h4>
               <p className="text-xs text-slate-600 leading-relaxed">
                 Machine learning inference across 22 vocal fold perturbation dimensions with instant healthy and PD specimen baseline presets.
               </p>
@@ -153,15 +192,15 @@ export const LandingPage: React.FC = () => {
           {/* Card 3: Model Metrics & Benchmarks */}
           <Link
             to="/models"
-            className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs hover:border-cyan-300 hover:shadow-card-hover transition-all flex flex-col justify-between group"
+            className="p-5 rounded-2xl bg-white border border-[#E0EFFA] shadow-xs hover:border-cyan-300 hover:shadow-card-hover transition-all flex flex-col justify-between group"
           >
             <div className="space-y-3">
-              <div className="w-10 h-10 rounded-xl bg-sky-50 text-cyan-600 flex items-center justify-center border border-sky-100 group-hover:bg-cyan-100 transition-colors">
-                <BarChart3 className="w-5 h-5" />
+              <div className="w-10 h-10 rounded-xl bg-cyan-50 text-cyan-600 flex items-center justify-center border border-cyan-100 group-hover:bg-cyan-100 transition-colors">
+                <BarChart3 className="w-5 h-5 text-cyan-600" />
               </div>
-              <h3 className="font-bold text-slate-900 text-sm group-hover:text-cyan-700 transition-colors">
+              <h4 className="font-bold text-slate-900 text-sm group-hover:text-cyan-700 transition-colors">
                 Model Metrics & Benchmarks
-              </h3>
+              </h4>
               <p className="text-xs text-slate-600 leading-relaxed">
                 Held-out evaluation benchmarks on unseen subjects (100% sensitivity, 0.957 F1-score) with candidate algorithm comparisons.
               </p>
@@ -175,15 +214,15 @@ export const LandingPage: React.FC = () => {
           {/* Card 4: UCI Dataset Documentation */}
           <Link
             to="/dataset"
-            className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs hover:border-cyan-300 hover:shadow-card-hover transition-all flex flex-col justify-between group"
+            className="p-5 rounded-2xl bg-white border border-[#E0EFFA] shadow-xs hover:border-cyan-300 hover:shadow-card-hover transition-all flex flex-col justify-between group"
           >
             <div className="space-y-3">
-              <div className="w-10 h-10 rounded-xl bg-sky-50 text-cyan-600 flex items-center justify-center border border-sky-100 group-hover:bg-cyan-100 transition-colors">
-                <Database className="w-5 h-5" />
+              <div className="w-10 h-10 rounded-xl bg-cyan-50 text-cyan-600 flex items-center justify-center border border-cyan-100 group-hover:bg-cyan-100 transition-colors">
+                <Database className="w-5 h-5 text-cyan-600" />
               </div>
-              <h3 className="font-bold text-slate-900 text-sm group-hover:text-cyan-700 transition-colors">
+              <h4 className="font-bold text-slate-900 text-sm group-hover:text-cyan-700 transition-colors">
                 UCI Dataset Documentation
-              </h3>
+              </h4>
               <p className="text-xs text-slate-600 leading-relaxed">
                 Full documentation of the 195 biomedical phonation samples across 32 subjects with interactive 22-biomarker feature specifications.
               </p>
@@ -197,15 +236,15 @@ export const LandingPage: React.FC = () => {
           {/* Card 5: Assessment History & Audit */}
           <Link
             to="/history"
-            className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs hover:border-cyan-300 hover:shadow-card-hover transition-all flex flex-col justify-between group"
+            className="p-5 rounded-2xl bg-white border border-[#E0EFFA] shadow-xs hover:border-cyan-300 hover:shadow-card-hover transition-all flex flex-col justify-between group"
           >
             <div className="space-y-3">
-              <div className="w-10 h-10 rounded-xl bg-sky-50 text-cyan-600 flex items-center justify-center border border-sky-100 group-hover:bg-cyan-100 transition-colors">
-                <History className="w-5 h-5" />
+              <div className="w-10 h-10 rounded-xl bg-cyan-50 text-cyan-600 flex items-center justify-center border border-cyan-100 group-hover:bg-cyan-100 transition-colors">
+                <History className="w-5 h-5 text-cyan-600" />
               </div>
-              <h3 className="font-bold text-slate-900 text-sm group-hover:text-cyan-700 transition-colors">
+              <h4 className="font-bold text-slate-900 text-sm group-hover:text-cyan-700 transition-colors">
                 Assessment History & Audit
-              </h3>
+              </h4>
               <p className="text-xs text-slate-600 leading-relaxed">
                 Relational SQLite audit trail of recorded inference runs with parameter inspection and session data management.
               </p>
@@ -216,18 +255,18 @@ export const LandingPage: React.FC = () => {
             </div>
           </Link>
 
-          {/* Card 6: Research Cockpit */}
+          {/* Card 6: Clinical Research Cockpit */}
           <Link
             to="/dashboard"
-            className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs hover:border-cyan-300 hover:shadow-card-hover transition-all flex flex-col justify-between group"
+            className="p-5 rounded-2xl bg-white border border-[#E0EFFA] shadow-xs hover:border-cyan-300 hover:shadow-card-hover transition-all flex flex-col justify-between group"
           >
             <div className="space-y-3">
-              <div className="w-10 h-10 rounded-xl bg-sky-50 text-cyan-600 flex items-center justify-center border border-sky-100 group-hover:bg-cyan-100 transition-colors">
-                <Layers className="w-5 h-5" />
+              <div className="w-10 h-10 rounded-xl bg-cyan-50 text-cyan-600 flex items-center justify-center border border-cyan-100 group-hover:bg-cyan-100 transition-colors">
+                <Layers className="w-5 h-5 text-cyan-600" />
               </div>
-              <h3 className="font-bold text-slate-900 text-sm group-hover:text-cyan-700 transition-colors">
+              <h4 className="font-bold text-slate-900 text-sm group-hover:text-cyan-700 transition-colors">
                 Clinical Research Dashboard
-              </h3>
+              </h4>
               <p className="text-xs text-slate-600 leading-relaxed">
                 High-level operational overview summarizing model status, dataset quality metrics, and held-out validation results.
               </p>
@@ -240,11 +279,11 @@ export const LandingPage: React.FC = () => {
         </div>
       </section>
 
-      {/* 3. Verified System Status & Recent Activity */}
+      {/* 6. Verified System Status & Recent Activity */}
       <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* System Status Panel */}
-        <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div className="p-5 rounded-2xl bg-white border border-[#E0EFFA] shadow-xs space-y-4">
+          <div className="flex items-center justify-between border-b border-[#E0EFFA] pb-3">
             <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
               <ShieldCheck className="w-4 h-4 text-cyan-600" />
               <span>Verified System Status</span>
@@ -253,7 +292,7 @@ export const LandingPage: React.FC = () => {
           </div>
 
           <div className="space-y-2.5 text-xs">
-            <div className="p-3 rounded-xl bg-[#F0F8FF] border border-sky-200/80 flex items-center justify-between">
+            <div className="p-3 rounded-xl bg-[#F0F8FF] border border-[#E0EFFA] flex items-center justify-between">
               <div>
                 <span className="text-slate-500 block text-[11px]">Machine Learning Pipeline</span>
                 <strong className="text-slate-900 font-semibold">Gradient Boosting Classifier</strong>
@@ -287,8 +326,8 @@ export const LandingPage: React.FC = () => {
         </div>
 
         {/* Recent Assessment Activity */}
-        <div className="lg:col-span-2 p-5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div className="lg:col-span-2 p-5 rounded-2xl bg-white border border-[#E0EFFA] shadow-xs space-y-4">
+          <div className="flex items-center justify-between border-b border-[#E0EFFA] pb-3">
             <div>
               <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
                 <Clock className="w-4 h-4 text-cyan-600" />
@@ -356,8 +395,8 @@ export const LandingPage: React.FC = () => {
         </div>
       </section>
 
-      {/* 4. Scientific Methodology & 4-Stage Workflow */}
-      <section className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-7 space-y-5 shadow-xs">
+      {/* 7. Scientific Methodology & 4-Stage Workflow */}
+      <section className="bg-white border border-[#E0EFFA] rounded-2xl p-6 sm:p-7 space-y-5 shadow-xs">
         <div className="flex items-center justify-between">
           <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
             <Layers className="w-4 h-4 text-cyan-600" />
@@ -367,7 +406,7 @@ export const LandingPage: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
-          <div className="p-3.5 rounded-xl bg-[#F0F8FF] border border-sky-200/80 space-y-1.5">
+          <div className="p-3.5 rounded-xl bg-[#F0F8FF] border border-[#E0EFFA] space-y-1.5">
             <span className="font-mono text-cyan-700 font-bold block text-[11px]">01. Acoustic Perturbation</span>
             <h4 className="font-semibold text-slate-900 text-xs">Phonation Dynamics</h4>
             <p className="text-slate-600 text-[11px] leading-relaxed">
