@@ -4,7 +4,7 @@
 
 @layer base {
   body {
-    @apply bg-slate-50 text-slate-800 min-h-screen antialiased selection:bg-teal-500 selection:text-white;
+    @apply bg-slate-50 text-slate-800 min-h-screen antialiased selection:bg-cyan-500 selection:text-white;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   }
   
@@ -27,6 +27,15 @@
 
 .clinical-card:hover {
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.06), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
+}
+
+/* Glow utility shadows for cyan active elements */
+.shadow-glow-cyan {
+  box-shadow: 0 8px 22px -3px rgba(14, 165, 233, 0.38);
+}
+
+.shadow-glow-pill {
+  box-shadow: 0 4px 14px 0 rgba(6, 182, 212, 0.32);
 }
 
 /* Subtle clean scrollbar */

@@ -248,18 +248,6 @@ export const HandTremorTest: React.FC<Props> = ({ onComplete, savedMetrics }) =>
 
   return (
     <div className="space-y-6">
-      {/* Test Guidance */}
-      <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5 text-xs">
-        <h4 className="font-bold text-navy-800 text-sm flex items-center gap-2">
-          <Activity className="w-4 h-4 text-teal-600" />
-          <span>Hand Stability & Tremor Protocol</span>
-        </h4>
-        <p className="text-slate-600 leading-relaxed">
-          <strong>Instructions:</strong> Position your hand clearly in front of the camera, approximately 1–2 feet away. 
-          Keep your wrist and fingers comfortably supported or gently outstretched and hold as still as possible for 30 seconds.
-        </p>
-      </div>
-
       {/* Camera Viewport and Controls */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left: Video / Canvas */}

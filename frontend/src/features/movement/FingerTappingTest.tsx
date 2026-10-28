@@ -252,18 +252,6 @@ export const FingerTappingTest: React.FC<Props> = ({ onComplete, savedMetrics })
 
   return (
     <div className="space-y-6">
-      {/* Guidance */}
-      <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5 text-xs">
-        <h4 className="font-bold text-navy-800 text-sm flex items-center gap-2">
-          <Zap className="w-4 h-4 text-teal-600" />
-          <span>Finger Tapping Speed & Rhythm Protocol</span>
-        </h4>
-        <p className="text-slate-600 leading-relaxed">
-          <strong>Instructions:</strong> Position your dominant hand in front of the camera with your thumb and index finger clearly visible. 
-          Tap your index finger against your thumb repeatedly as rapidly and as widely as possible for 30 seconds.
-        </p>
-      </div>
-
       {/* Camera Viewport and Controls */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 relative aspect-[4/3] bg-slate-900 rounded-2xl border border-slate-300 overflow-hidden flex items-center justify-center shadow-xs">

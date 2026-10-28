@@ -253,21 +253,6 @@ export const ArmMovementTest: React.FC<Props> = ({ onComplete, savedMetrics }) =
 
   return (
     <div className="space-y-6">
-      <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5 text-xs">
-        <h4 className="font-bold text-navy-800 text-sm flex items-center gap-2">
-          <Activity className="w-4 h-4 text-teal-600" />
-          <span>Arm Movement & Excursion Range Protocol</span>
-        </h4>
-        <p className="text-slate-600 leading-relaxed">
-          <strong>Instructions:</strong> Sit or stand comfortably with your upper body (shoulder, elbow, and wrist) in camera view. 
-          Slowly bend and extend your arm through your natural comfortable range of motion for 20 seconds.
-        </p>
-        <p className="text-amber-800 text-[11px] flex items-center gap-1.5 font-medium pt-0.5">
-          <HeartPulse className="w-3.5 h-3.5 text-amber-600" />
-          <span>Safety Notice: Never force motion through pain. Stop immediately if you experience discomfort.</span>
-        </p>
-      </div>
-
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 relative aspect-[4/3] bg-slate-900 rounded-2xl border border-slate-300 overflow-hidden flex items-center justify-center shadow-xs">
           <video

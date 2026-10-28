@@ -23,6 +23,9 @@ export default {
         clinical: {
           teal: '#14B8A6',
           darkTeal: '#0F766E',
+          cyan: '#00C5FF',
+          sky: '#0EA5E9',
+          sidebar: '#F0F8FF',
           bg: '#F8FAFC',
           card: '#FFFFFF',
           border: '#E2E8F0',
@@ -38,7 +41,9 @@ export default {
       boxShadow: {
         'card': '0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05)',
         'card-hover': '0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05)',
-        'dropdown': '0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04)'
+        'dropdown': '0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04)',
+        'glow-cyan': '0 6px 18px -2px rgba(14, 165, 233, 0.35)',
+        'glow-pill': '0 4px 12px 0 rgba(6, 182, 212, 0.30)'
       }
     },
   },

@@ -47,11 +47,11 @@ export const MovementSummary: React.FC<Props> = ({ report, patient, onReset }) =
       {/* Header & Primary Action Controls */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-5">
         <div>
-          <div className="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full bg-teal-50 border border-teal-200 text-teal-800 text-xs font-semibold mb-1">
-            <ClipboardList className="w-3.5 h-3.5 text-teal-600" />
+          <div className="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full bg-sky-50 border border-sky-200 text-cyan-800 text-xs font-semibold mb-1">
+            <ClipboardList className="w-3.5 h-3.5 text-cyan-600" />
             <span>Standardized 4-Test Battery Assessment</span>
           </div>
-          <h2 className="text-xl sm:text-2xl font-bold text-navy-800">
+          <h2 className="text-xl sm:text-2xl font-bold text-slate-900">
             Consolidated Movement Telemetry Report
           </h2>
           <p className="text-xs text-slate-500">
@@ -63,7 +63,7 @@ export const MovementSummary: React.FC<Props> = ({ report, patient, onReset }) =
           <button
             type="button"
             onClick={handleDownloadPdf}
-            className="px-4 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold shadow-xs transition-colors flex items-center gap-2"
+            className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-sky-500 hover:from-cyan-600 hover:to-sky-600 text-white text-xs font-bold shadow-xs transition-colors flex items-center gap-2"
           >
             <FileDown className="w-4 h-4" />
             <span>Download Full Assessment Report (PDF)</span>
