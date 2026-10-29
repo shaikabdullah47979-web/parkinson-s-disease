@@ -133,4 +133,58 @@ def test_arm_movement_sparc_smoothness():
     assert res.excursion_range_deg >= 80.0
     assert "sparc_spectral_arc_length" in res.technical_details
 
+def test_arm_movement_stationary_arm():
+    """Verify that an arm held still produces Limited Excursion with clear clinical explanation."""
+    duration = 20.0
+    times = np.linspace(0.0, duration, 600) * 1000.0
+    # Stationary arm at ~90 deg with minimal camera noise (< 2 deg)
+    stationary_angles = 90.0 + np.random.normal(0, 0.4, len(times))
+
+    req = ArmAnalysisRequest(
+        timestamps_ms=times.tolist(),
+        angles_deg=stationary_angles.tolist(),
+        total_delivered_frames=len(times),
+        duration_seconds=duration
+    )
+
+    res = movement_service.analyze_arm_movement(req)
+    assert res.status == "Limited Excursion"
+    assert res.excursion_range_deg < 15.0
+    assert "Minimal Arm Movement" in res.plain_english_title
+
+def test_arm_movement_insufficient_frames():
+    """Verify that fewer than 15 frames gracefully returns Insufficient Data."""
+    req = ArmAnalysisRequest(
+        timestamps_ms=[100.0, 133.0, 166.0],
+        angles_deg=[90.0, 92.0, 94.0],
+        total_delivered_frames=3,
+        duration_seconds=0.1
+    )
+    res = movement_service.analyze_arm_movement(req)
+    assert res.status == "Insufficient Data"
+    assert res.signal_quality == "Poor"
+    assert res.smoothness_score == 0.0
+
+def test_arm_movement_irregular_timestamps():
+    """Verify non-uniform frame intervals are handled without velocity artifacts or zero-division."""
+    # Irregular intervals between 20ms and 50ms
+    np.random.seed(42)
+    deltas = np.random.uniform(20.0, 50.0, 200)
+    times = np.cumsum(np.insert(deltas, 0, 0.0))
+    duration = times[-1] / 1000.0
+    # 2 smooth flexion cycles
+    angles = 90.0 + 35.0 * np.sin(2 * np.pi * 0.3 * (times / 1000.0))
+
+    req = ArmAnalysisRequest(
+        timestamps_ms=times.tolist(),
+        angles_deg=angles.tolist(),
+        total_delivered_frames=len(times),
+        duration_seconds=duration
+    )
+    res = movement_service.analyze_arm_movement(req)
+    assert res.status == "Completed"
+    assert res.mean_angular_velocity_deg_per_sec > 0.0
+    assert not np.isnan(res.mean_angular_velocity_deg_per_sec)
+    assert not np.isinf(res.mean_angular_velocity_deg_per_sec)
+
 

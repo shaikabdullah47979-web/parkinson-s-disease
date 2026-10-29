@@ -363,11 +363,89 @@ export async function analyzeArmKinematics(
     console.warn('Backend arm analysis fallback:', err);
   }
 
-  // Local fallback
+  // Local mathematical fallback (Never fabricate fixed scores or pretend successful test if data is poor)
   const n = anglesDeg.length;
   const continuity = deliveredFrames > 0 ? Math.min(100, (n / deliveredFrames) * 100) : 100;
-  const minA = n > 0 ? Math.min(...anglesDeg) : 0;
-  const maxA = n > 0 ? Math.max(...anglesDeg) : 0;
+
+  if (n < 15 || durationSeconds < 3.0) {
+    return {
+      durationSeconds,
+      deliveredFrames,
+      processedFrames: n,
+      trackingContinuityPct: parseFloat(continuity.toFixed(1)),
+      minElbowAngleDeg: 0,
+      maxElbowAngleDeg: 0,
+      excursionRangeDeg: 0,
+      meanAngularVelocityDegPerSec: 0,
+      peakAngularVelocityDegPerSec: 0,
+      movementSmoothnessScore: 0,
+      repetitionCount: 0,
+      status: 'Insufficient Data',
+      signalQuality: 'Poor',
+      plainEnglishTitle: 'Insufficient Arm Tracking Data',
+      plainEnglishExplanation: 'Arm joints were not tracked continuously for long enough to evaluate movement.',
+      recommendedAction: 'Ensure your upper body is framed 3–5 ft from the camera with good lighting, and repeat the test.',
+      angleSeries: []
+    };
+  }
+
+  // Calculate actual statistical and kinematic metrics from timestamps and angles
+  let minA = anglesDeg[0];
+  let maxA = anglesDeg[0];
+  for (let i = 1; i < n; i++) {
+    if (anglesDeg[i] < minA) minA = anglesDeg[i];
+    if (anglesDeg[i] > maxA) maxA = anglesDeg[i];
+  }
+  const excursion = Math.max(0, maxA - minA);
+
+  // Compute velocities with actual time differences
+  const velocities: number[] = [];
+  for (let i = 1; i < n; i++) {
+    const dt = Math.max(0.005, (timestampsMs[i] - timestampsMs[i - 1]) / 1000.0);
+    const dTheta = Math.abs(anglesDeg[i] - anglesDeg[i - 1]);
+    velocities.push(dTheta / dt);
+  }
+
+  const meanVel = velocities.length > 0 ? velocities.reduce((a, b) => a + b, 0) / velocities.length : 0;
+  const peakVel = velocities.length > 0 ? Math.max(...velocities) : 0;
+
+  // Simple peak-valley cycle counting on local data
+  let reps = 0;
+  let direction = 0; // 1 for increasing, -1 for decreasing
+  let lastExtremum = anglesDeg[0];
+  const threshold = Math.max(8.0, excursion * 0.25);
+
+  for (let i = 1; i < n; i++) {
+    const diff = anglesDeg[i] - lastExtremum;
+    if (direction >= 0 && diff < -threshold) {
+      reps += 1;
+      direction = -1;
+      lastExtremum = anglesDeg[i];
+    } else if (direction <= 0 && diff > threshold) {
+      direction = 1;
+      lastExtremum = anglesDeg[i];
+    }
+  }
+
+  // Generate downsampled motion points for the chart
+  const step = Math.max(1, Math.floor(n / 100));
+  const series: MotionPoint[] = [];
+  const t0 = timestampsMs[0] || 0;
+  for (let i = 0; i < n; i += step) {
+    series.push({
+      time_sec: parseFloat(((timestampsMs[i] - t0) / 1000.0).toFixed(2)),
+      displacement: parseFloat(anglesDeg[i].toFixed(1))
+    });
+  }
+
+  // Estimate smoothness proportionally from normalized velocity variance
+  const velVariance = velocities.length > 1
+    ? velocities.reduce((sum, v) => sum + (v - meanVel) ** 2, 0) / velocities.length
+    : 0;
+  const velCv = meanVel > 0.1 ? Math.sqrt(velVariance) / meanVel : 1.0;
+  const smoothnessScore = Math.max(20, Math.min(95, Math.round(90 - Math.min(60, velCv * 25))));
+
+  const isAdequate = excursion >= 15.0 && reps >= 1;
 
   return {
     durationSeconds,
@@ -376,17 +454,19 @@ export async function analyzeArmKinematics(
     trackingContinuityPct: parseFloat(continuity.toFixed(1)),
     minElbowAngleDeg: Math.round(minA),
     maxElbowAngleDeg: Math.round(maxA),
-    excursionRangeDeg: Math.round(maxA - minA),
-    meanAngularVelocityDegPerSec: 0,
-    peakAngularVelocityDegPerSec: 0,
-    movementSmoothnessScore: 80,
-    repetitionCount: 0,
-    status: 'Completed',
-    signalQuality: 'Good',
-    plainEnglishTitle: `${Math.round(maxA - minA)}° Excursion Range`,
-    plainEnglishExplanation: `Arm movement tracked across ${n} frames.`,
-    recommendedAction: 'Maintain steady pace.',
-    angleSeries: []
+    excursionRangeDeg: Math.round(excursion),
+    meanAngularVelocityDegPerSec: parseFloat(meanVel.toFixed(1)),
+    peakAngularVelocityDegPerSec: parseFloat(peakVel.toFixed(1)),
+    movementSmoothnessScore: isAdequate ? smoothnessScore : 40,
+    repetitionCount: Math.floor(reps / 2),
+    status: isAdequate ? 'Completed' : 'Limited Excursion',
+    signalQuality: continuity >= 80 ? 'Good' : 'Moderate',
+    plainEnglishTitle: isAdequate ? `${Math.round(excursion)}° Range of Motion (${Math.floor(reps / 2)} Cycles)` : 'Minimal Arm Movement Detected',
+    plainEnglishExplanation: isAdequate
+      ? `Arm moved through ${Math.round(excursion)}° excursion range with ${Math.floor(reps / 2)} completed flexion-extension cycles.`
+      : 'Little elbow flexion or extension was observable during the recording.',
+    recommendedAction: isAdequate ? 'Maintain steady pace.' : 'Repeat the test, ensuring full bending and straightening of your elbow.',
+    angleSeries: series
   };
 }
 

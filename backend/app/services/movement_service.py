@@ -493,9 +493,14 @@ class MovementService:
                 displacement=round(float(filtered_angles[i]), 1)
             ))
 
-        pe_title = f"{round(excursion, 1)}° Range of Motion ({reps} Repetitions)"
-        pe_exp = f"Elbow angle moved smoothly from {round(min_a, 1)}° to {round(max_a, 1)}° at an average rotational velocity of {round(mean_vel, 1)}°/s."
-        pe_act = "Maintain comfortable, steady motion without overextending."
+        if excursion < 15.0 or reps == 0:
+            pe_title = "Minimal Arm Movement Detected" if excursion < 15.0 else f"{round(excursion, 1)}° Range of Motion ({reps} Repetitions)"
+            pe_exp = "The arm remained mostly stationary with little observable elbow flexion or extension during recording." if excursion < 15.0 else f"Elbow angle moved through {round(excursion, 1)}° with limited cyclical repetitions."
+            pe_act = "Please perform full, rhythmic bending and extending of the elbow for the full 20 seconds."
+        else:
+            pe_title = f"{round(excursion, 1)}° Range of Motion ({reps} Repetitions)"
+            pe_exp = f"Elbow angle moved smoothly from {round(min_a, 1)}° to {round(max_a, 1)}° at an average rotational velocity of {round(mean_vel, 1)}°/s."
+            pe_act = "Maintain comfortable, steady motion without overextending."
 
         return ArmAnalysisResponse(
             status="Completed" if excursion >= 15.0 else "Limited Excursion",
