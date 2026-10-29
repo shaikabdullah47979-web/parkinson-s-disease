@@ -10,14 +10,23 @@ interface Props {
   savedMetrics?: TappingMetrics | null;
 }
 
+type HandSelection = 'right' | 'left' | 'auto';
+
 export const FingerTappingTest: React.FC<Props> = ({ onComplete, savedMetrics }) => {
   const { videoRef, isCameraActive, cameraError, isLoading, startCamera, stopCamera } = useCamera();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  const [testState, setTestState] = useState<'idle' | 'running' | 'analyzing' | 'completed'>('idle');
+  // Hand selection and state
+  const [selectedHand, setSelectedHand] = useState<HandSelection>('right');
+  const [activeHand, setActiveHand] = useState<'right' | 'left'>('right');
+
+  // Test states: idle -> countdown -> running -> analyzing -> completed
+  const [testState, setTestState] = useState<'idle' | 'countdown' | 'running' | 'analyzing' | 'completed'>('idle');
+  const [countdown, setCountdown] = useState<number>(3);
   const [timeLeft, setTimeLeft] = useState<number>(30);
   const [liveTapCount, setLiveTapCount] = useState<number>(0);
   const [handDetected, setHandDetected] = useState<boolean>(false);
+  const [lockGuidance, setLockGuidance] = useState<string>('Enable camera to begin');
   const [metrics, setMetrics] = useState<TappingMetrics | null>(savedMetrics || null);
   const [modelLoading, setModelLoading] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -28,6 +37,7 @@ export const FingerTappingTest: React.FC<Props> = ({ onComplete, savedMetrics })
 
   const animationFrameId = useRef<number | null>(null);
   const timerIntervalRef = useRef<number | null>(null);
+  const countdownIntervalRef = useRef<number | null>(null);
   const testDuration = 30;
 
   // Frame telemetry refs
@@ -36,23 +46,39 @@ export const FingerTappingTest: React.FC<Props> = ({ onComplete, savedMetrics })
   const validLandmarkFramesRef = useRef<number>(0);
   const lastTimestampRef = useRef<number>(0);
 
+  // State refs for animation loop
+  const testStateRef = useRef<'idle' | 'countdown' | 'running' | 'analyzing' | 'completed'>('idle');
+  testStateRef.current = testState;
+
+  const selectedHandRef = useRef<HandSelection>('right');
+  selectedHandRef.current = selectedHand;
+
   // Raw distance time-series
   const recordedTimesRef = useRef<number[]>([]);
   const recordedDistancesRef = useRef<number[]>([]);
 
-  // Local live tap counting state
+  // Hysteresis live tap counting state
   const isClosedRef = useRef<boolean>(false);
+  const cycleMaxDistRef = useRef<number>(0.6);
   const lastTapTimeRef = useRef<number>(0);
 
   const handleStartCamera = async () => {
     setErrorMsg(null);
     setModelLoading(true);
+    setLockGuidance('Loading vision landmarking model...');
     try {
       await getHandLandmarker();
+      setLockGuidance('Requesting webcam access...');
       const ok = await startCamera();
-      if (!ok) setErrorMsg('Failed to access camera.');
+      if (!ok) {
+        setErrorMsg('Failed to access camera.');
+        setLockGuidance('Camera access failed');
+      } else {
+        setLockGuidance('Hold hand in front of camera with fingers spread');
+      }
     } catch (e: any) {
       setErrorMsg(`Failed to initialize MediaPipe vision model: ${e.message}`);
+      setLockGuidance('Model initialization failed');
     } finally {
       setModelLoading(false);
     }
@@ -94,65 +120,102 @@ export const FingerTappingTest: React.FC<Props> = ({ onComplete, savedMetrics })
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     if (results && results.landmarks && results.landmarks.length > 0) {
-      setHandDetected(true);
-      validLandmarkFramesRef.current += 1;
-      const landmarks = results.landmarks[0];
+      // Target hand selection
+      let handIndex = 0;
+      if (results.handednesses && results.handednesses.length > 0) {
+        if (selectedHandRef.current !== 'auto') {
+          // On mirrored webcams, MediaPipe's "Left" is user's right side in preview
+          const targetCategory = selectedHandRef.current === 'right' ? 'Left' : 'Right';
+          const matchIdx = results.handednesses.findIndex((h: any) => h[0]?.categoryName === targetCategory);
+          if (matchIdx !== -1) handIndex = matchIdx;
+        }
+        const detectedSide = results.handednesses[handIndex]?.[0]?.categoryName === 'Left' ? 'right' : 'left';
+        setActiveHand(detectedSide);
+      }
 
+      const landmarks = results.landmarks[handIndex];
       const thumbTip = landmarks[4];
       const indexTip = landmarks[8];
       const wrist = landmarks[0];
       const middleMcp = landmarks[9];
 
-      // Normalized distance scale: palm size between wrist and middle MCP
-      const palmScale = distance2D(wrist, middleMcp);
-      const rawDist = distance2D(thumbTip, indexTip);
-      const normalizedDist = palmScale > 0.05 ? rawDist / palmScale : rawDist * 2.5;
+      if (thumbTip && indexTip && wrist && middleMcp) {
+        setHandDetected(true);
+        setLockGuidance('Fingers tracked — ready for tapping test');
+        validLandmarkFramesRef.current += 1;
 
-      const tx = thumbTip.x * canvas.width;
-      const ty = thumbTip.y * canvas.height;
-      const ix = indexTip.x * canvas.width;
-      const iy = indexTip.y * canvas.height;
+        // Normalized distance: distance between thumb tip and index tip divided by palm scale
+        const palmScale = distance2D(wrist, middleMcp);
+        const rawDist = distance2D(thumbTip, indexTip);
+        const normalizedDist = palmScale > 0.05 ? rawDist / palmScale : rawDist * 2.5;
 
-      const isContact = normalizedDist < 0.35;
+        // Video is mirrored via CSS scale-x-[-1]. To match video without mirroring canvas text,
+        // we invert X in coordinates: x_canvas = (1.0 - pt.x) * width
+        const toCanvasX = (normX: number) => (1.0 - normX) * canvas.width;
+        const toCanvasY = (normY: number) => normY * canvas.height;
 
-      // Draw connection line
-      ctx.beginPath();
-      ctx.moveTo(tx, ty);
-      ctx.lineTo(ix, iy);
-      ctx.strokeStyle = isContact ? '#10b981' : '#38bdf8';
-      ctx.lineWidth = 4;
-      ctx.stroke();
+        const tx = toCanvasX(thumbTip.x);
+        const ty = toCanvasY(thumbTip.y);
+        const ix = toCanvasX(indexTip.x);
+        const iy = toCanvasY(indexTip.y);
 
-      // Draw fingertips
-      [thumbTip, indexTip].forEach((pt, idx) => {
-        const px = pt.x * canvas.width;
-        const py = pt.y * canvas.height;
+        const isContact = normalizedDist < 0.32;
+
+        // Draw connection line
         ctx.beginPath();
-        ctx.arc(px, py, 7, 0, 2 * Math.PI);
-        ctx.fillStyle = idx === 0 ? '#f59e0b' : '#38bdf8';
-        ctx.fill();
-        ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 2;
+        ctx.moveTo(tx, ty);
+        ctx.lineTo(ix, iy);
+        ctx.strokeStyle = isContact ? '#10b981' : '#0ea5e9';
+        ctx.lineWidth = 4;
         ctx.stroke();
-      });
 
-      if (testState === 'running') {
-        recordedTimesRef.current.push(nowInMs);
-        recordedDistancesRef.current.push(normalizedDist);
+        // Draw fingertips
+        [
+          { pt: thumbTip, color: '#f59e0b', label: 'Thumb' },
+          { pt: indexTip, color: '#0ea5e9', label: 'Index' }
+        ].forEach((item) => {
+          const px = toCanvasX(item.pt.x);
+          const py = toCanvasY(item.pt.y);
+          ctx.beginPath();
+          ctx.arc(px, py, 7, 0, 2 * Math.PI);
+          ctx.fillStyle = item.color;
+          ctx.fill();
+          ctx.strokeStyle = '#ffffff';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        });
 
-        // Live approximate tap counter with refractory period
-        if (!isClosedRef.current && normalizedDist <= 0.32) {
-          if (nowInMs - lastTapTimeRef.current >= 120) {
-            isClosedRef.current = true;
-            lastTapTimeRef.current = nowInMs;
-            setLiveTapCount(c => c + 1);
-          }
-        } else if (isClosedRef.current && normalizedDist >= 0.52) {
-          isClosedRef.current = false;
+        // Track peak excursion for hysteresis state machine
+        if (normalizedDist > cycleMaxDistRef.current) {
+          cycleMaxDistRef.current = normalizedDist;
         }
+
+        // Live approximate tap counter with excursion requirement & refractory period
+        if (testStateRef.current === 'running') {
+          recordedTimesRef.current.push(nowInMs);
+          recordedDistancesRef.current.push(normalizedDist);
+
+          if (!isClosedRef.current) {
+            if (normalizedDist <= 0.30 && (cycleMaxDistRef.current - normalizedDist) >= 0.15) {
+              if (nowInMs - lastTapTimeRef.current >= 100) {
+                isClosedRef.current = true;
+                lastTapTimeRef.current = nowInMs;
+                cycleMaxDistRef.current = normalizedDist;
+                setLiveTapCount((c) => c + 1);
+              }
+            }
+          } else if (normalizedDist >= 0.48) {
+            isClosedRef.current = false;
+            cycleMaxDistRef.current = normalizedDist;
+          }
+        }
+      } else {
+        setHandDetected(false);
+        setLockGuidance('Position fingers fully within frame');
       }
     } else {
       setHandDetected(false);
+      setLockGuidance('Hold hand up to the camera');
     }
 
     const validCount = validLandmarkFramesRef.current;
@@ -163,7 +226,7 @@ export const FingerTappingTest: React.FC<Props> = ({ onComplete, savedMetrics })
     else setLiveQuality('Insufficient');
 
     animationFrameId.current = requestAnimationFrame(runTrackingLoop);
-  }, [videoRef, testState]);
+  }, [videoRef]);
 
   useEffect(() => {
     if (isCameraActive) {
@@ -174,13 +237,40 @@ export const FingerTappingTest: React.FC<Props> = ({ onComplete, savedMetrics })
     };
   }, [isCameraActive, runTrackingLoop]);
 
-  const handleStartTest = () => {
+  // Initiate countdown before active recording
+  const handleStartCountdown = () => {
+    if (!handDetected) {
+      setErrorMsg('Please position your hand in view of the camera before starting.');
+      return;
+    }
+
+    setErrorMsg(null);
+    setTestState('countdown');
+    setCountdown(3);
+
+    countdownIntervalRef.current = window.setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          if (countdownIntervalRef.current) {
+            clearInterval(countdownIntervalRef.current);
+            countdownIntervalRef.current = null;
+          }
+          startActiveRecording();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  const startActiveRecording = () => {
     recordedTimesRef.current = [];
     recordedDistancesRef.current = [];
     deliveredFramesRef.current = 0;
     processedFramesRef.current = 0;
     validLandmarkFramesRef.current = 0;
     isClosedRef.current = false;
+    cycleMaxDistRef.current = 0.6;
     lastTapTimeRef.current = 0;
 
     setLiveTapCount(0);
@@ -203,6 +293,10 @@ export const FingerTappingTest: React.FC<Props> = ({ onComplete, savedMetrics })
     if (timerIntervalRef.current) {
       clearInterval(timerIntervalRef.current);
       timerIntervalRef.current = null;
+    }
+    if (countdownIntervalRef.current) {
+      clearInterval(countdownIntervalRef.current);
+      countdownIntervalRef.current = null;
     }
 
     const elapsed = testDuration - timeLeft;
@@ -236,6 +330,10 @@ export const FingerTappingTest: React.FC<Props> = ({ onComplete, savedMetrics })
       clearInterval(timerIntervalRef.current);
       timerIntervalRef.current = null;
     }
+    if (countdownIntervalRef.current) {
+      clearInterval(countdownIntervalRef.current);
+      countdownIntervalRef.current = null;
+    }
     setTestState('idle');
     setTimeLeft(testDuration);
     setLiveTapCount(0);
@@ -245,6 +343,7 @@ export const FingerTappingTest: React.FC<Props> = ({ onComplete, savedMetrics })
   useEffect(() => {
     return () => {
       if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+      if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
       if (animationFrameId.current) cancelAnimationFrame(animationFrameId.current);
       stopCamera();
     };
@@ -262,9 +361,10 @@ export const FingerTappingTest: React.FC<Props> = ({ onComplete, savedMetrics })
             muted
             className={`w-full h-full object-cover transform scale-x-[-1] ${isCameraActive ? 'block' : 'hidden'}`}
           />
+          {/* Note: Canvas is kept unmirrored so coordinates and labels render upright */}
           <canvas
             ref={canvasRef}
-            className={`absolute inset-0 w-full h-full object-cover pointer-events-none transform scale-x-[-1] ${isCameraActive ? 'block' : 'hidden'}`}
+            className={`absolute inset-0 w-full h-full object-cover pointer-events-none ${isCameraActive ? 'block' : 'hidden'}`}
           />
 
           {!isCameraActive ? (
@@ -275,7 +375,7 @@ export const FingerTappingTest: React.FC<Props> = ({ onComplete, savedMetrics })
                 type="button"
                 onClick={handleStartCamera}
                 disabled={isLoading || modelLoading}
-                className="px-5 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-semibold text-xs transition-colors shadow-sm disabled:opacity-50 inline-flex items-center gap-2"
+                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-400 to-sky-500 hover:from-cyan-500 hover:to-sky-600 text-white font-semibold text-xs transition-all shadow-glow-pill disabled:opacity-50 inline-flex items-center gap-2"
               >
                 {isLoading || modelLoading ? (
                   <>
@@ -292,14 +392,19 @@ export const FingerTappingTest: React.FC<Props> = ({ onComplete, savedMetrics })
             </div>
           ) : (
             <>
-              <div className="absolute top-4 left-4 z-10 flex items-center gap-2">
+              {/* Top Bar Badges */}
+              <div className="absolute top-4 left-4 z-10 flex items-center gap-2 flex-wrap">
                 <div className={`px-2.5 py-1 rounded-full text-[11px] font-semibold flex items-center gap-1.5 backdrop-blur-md border shadow-xs ${
                   handDetected
                     ? 'bg-emerald-900/90 text-emerald-200 border-emerald-500/40'
                     : 'bg-amber-900/90 text-amber-200 border-amber-500/40'
                 }`}>
                   {handDetected ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> : <AlertCircle className="w-3.5 h-3.5 text-amber-400" />}
-                  <span>{handDetected ? 'Fingers Tracked' : 'Position Fingers in Frame'}</span>
+                  <span>{lockGuidance}</span>
+                </div>
+
+                <div className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-slate-900/90 text-slate-200 border border-slate-700 backdrop-blur-md shadow-xs">
+                  Hand: <span className="text-cyan-400 font-bold uppercase">{activeHand}</span>
                 </div>
 
                 <div className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-slate-900/90 text-slate-200 border border-slate-700 backdrop-blur-md shadow-xs">
@@ -307,14 +412,26 @@ export const FingerTappingTest: React.FC<Props> = ({ onComplete, savedMetrics })
                 </div>
               </div>
 
+              {/* Countdown Overlay */}
+              {testState === 'countdown' && (
+                <div className="absolute inset-0 z-30 bg-slate-950/60 backdrop-blur-xs flex flex-col items-center justify-center text-white space-y-2">
+                  <span className="text-xs uppercase tracking-wider text-cyan-300 font-bold">Prepare Hand & Fingers</span>
+                  <div className="text-6xl sm:text-7xl font-mono font-extrabold text-white animate-pulse">
+                    {countdown}
+                  </div>
+                  <span className="text-xs text-slate-300">Spread thumb and index finger wide...</span>
+                </div>
+              )}
+
               {/* Live Tap Counter Badge */}
               <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
-                <div className="px-3.5 py-1.5 rounded-xl bg-slate-900/95 border border-teal-500/60 text-teal-300 font-mono font-bold text-sm shadow-md">
+                <div className="px-3.5 py-1.5 rounded-xl bg-slate-900/95 border border-cyan-500/60 text-cyan-300 font-mono font-bold text-sm shadow-md">
                   Taps: {liveTapCount}
                 </div>
                 {testState === 'running' && (
-                  <div className="px-3 py-1.5 rounded-xl bg-slate-900/95 border border-slate-700 text-white font-mono font-bold text-sm shadow-md">
-                    {timeLeft}s
+                  <div className="px-3 py-1.5 rounded-xl bg-slate-900/95 border border-slate-700 text-white font-mono font-bold text-sm shadow-md flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
+                    <span>{timeLeft}s</span>
                   </div>
                 )}
               </div>
@@ -322,20 +439,75 @@ export const FingerTappingTest: React.FC<Props> = ({ onComplete, savedMetrics })
           )}
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-4 flex flex-col justify-between shadow-xs">
+        {/* Right: Controls & Protocol Settings */}
+        <div className="bg-white border border-[#E0EFFA] rounded-2xl p-5 space-y-4 flex flex-col justify-between shadow-xs">
           <div className="space-y-4">
             <h5 className="font-bold text-navy-800 text-xs uppercase tracking-wider">Test Controls</h5>
+
+            {/* Target Hand Selector */}
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-semibold text-slate-600 block">Target Hand</label>
+              <div className="grid grid-cols-3 gap-1.5 p-1 bg-slate-100/80 rounded-xl border border-slate-200">
+                <button
+                  type="button"
+                  disabled={testState === 'running' || testState === 'countdown'}
+                  onClick={() => setSelectedHand('right')}
+                  className={`py-1.5 text-xs font-semibold rounded-lg transition-all ${
+                    selectedHand === 'right'
+                      ? 'bg-white text-navy-900 shadow-xs border border-slate-200/80 font-bold'
+                      : 'text-slate-600 hover:text-navy-900'
+                  }`}
+                >
+                  Right Hand
+                </button>
+                <button
+                  type="button"
+                  disabled={testState === 'running' || testState === 'countdown'}
+                  onClick={() => setSelectedHand('left')}
+                  className={`py-1.5 text-xs font-semibold rounded-lg transition-all ${
+                    selectedHand === 'left'
+                      ? 'bg-white text-navy-900 shadow-xs border border-slate-200/80 font-bold'
+                      : 'text-slate-600 hover:text-navy-900'
+                  }`}
+                >
+                  Left Hand
+                </button>
+                <button
+                  type="button"
+                  disabled={testState === 'running' || testState === 'countdown'}
+                  onClick={() => setSelectedHand('auto')}
+                  className={`py-1.5 text-xs font-semibold rounded-lg transition-all ${
+                    selectedHand === 'auto'
+                      ? 'bg-white text-navy-900 shadow-xs border border-slate-200/80 font-bold'
+                      : 'text-slate-600 hover:text-navy-900'
+                  }`}
+                >
+                  Auto
+                </button>
+              </div>
+            </div>
 
             <div className="space-y-2">
               {testState === 'idle' && (
                 <button
                   type="button"
-                  onClick={handleStartTest}
+                  onClick={handleStartCountdown}
                   disabled={!isCameraActive || !handDetected}
-                  className="w-full py-3 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-xs transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="w-full py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-sky-600 hover:from-cyan-600 hover:to-sky-700 text-white font-bold text-xs shadow-xs transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   <Play className="w-4 h-4 fill-current" />
                   <span>Start 30s Tapping Test</span>
+                </button>
+              )}
+
+              {testState === 'countdown' && (
+                <button
+                  type="button"
+                  disabled
+                  className="w-full py-3 rounded-xl bg-cyan-600/80 text-white font-bold text-xs shadow-xs flex items-center justify-center gap-2 cursor-wait"
+                >
+                  <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <span>Starting in {countdown}s...</span>
                 </button>
               )}
 
@@ -351,8 +523,8 @@ export const FingerTappingTest: React.FC<Props> = ({ onComplete, savedMetrics })
               )}
 
               {testState === 'analyzing' && (
-                <div className="w-full py-3 rounded-xl bg-teal-50 border border-teal-200 text-teal-800 text-xs font-semibold flex items-center justify-center gap-2">
-                  <div className="w-4 h-4 border-2 border-teal-600 border-t-transparent rounded-full animate-spin" />
+                <div className="w-full py-3 rounded-xl bg-cyan-50 border border-cyan-200 text-cyan-800 text-xs font-semibold flex items-center justify-center gap-2">
+                  <div className="w-4 h-4 border-2 border-cyan-600 border-t-transparent rounded-full animate-spin" />
                   <span>Analyzing Tap Cadence & Fatigue...</span>
                 </div>
               )}
@@ -377,7 +549,7 @@ export const FingerTappingTest: React.FC<Props> = ({ onComplete, savedMetrics })
                 </div>
                 <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
                   <div
-                    className="h-full bg-teal-500 transition-all duration-1000"
+                    className="h-full bg-cyan-500 transition-all duration-1000"
                     style={{ width: `${((testDuration - timeLeft) / testDuration) * 100}%` }}
                   />
                 </div>
@@ -394,6 +566,10 @@ export const FingerTappingTest: React.FC<Props> = ({ onComplete, savedMetrics })
 
           <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs space-y-1.5">
             <div className="flex justify-between">
+              <span className="text-slate-500">Target Selection:</span>
+              <strong className="text-navy-800 capitalize">{selectedHand} Hand ({activeHand} active)</strong>
+            </div>
+            <div className="flex justify-between">
               <span className="text-slate-500">Finger Detection:</span>
               <span className={handDetected ? 'text-emerald-700 font-semibold' : 'text-amber-700 font-medium'}>
                 {handDetected ? 'Thumb & Index Found' : 'Searching...'}
@@ -401,7 +577,7 @@ export const FingerTappingTest: React.FC<Props> = ({ onComplete, savedMetrics })
             </div>
             <div className="flex justify-between">
               <span className="text-slate-500">Live Tap Count:</span>
-              <strong className="text-teal-700 font-mono text-sm">{liveTapCount}</strong>
+              <strong className="text-cyan-700 font-mono text-sm">{liveTapCount}</strong>
             </div>
           </div>
         </div>
@@ -410,12 +586,12 @@ export const FingerTappingTest: React.FC<Props> = ({ onComplete, savedMetrics })
       {metrics && (
         <div className="space-y-5">
           {/* Plain-English Card */}
-          <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-3">
+          <div className="p-5 rounded-2xl bg-white border border-[#E0EFFA] shadow-xs space-y-3">
             <div className="flex items-start justify-between">
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-teal-600" />
-                  <span className="text-xs uppercase tracking-wider text-teal-700 font-bold">Tapping Kinematic Result</span>
+                  <Sparkles className="w-4 h-4 text-cyan-600" />
+                  <span className="text-xs uppercase tracking-wider text-cyan-700 font-bold">Tapping Kinematic Result</span>
                 </div>
                 <h3 className="text-lg font-bold text-navy-800">{metrics.plainEnglishTitle}</h3>
                 <p className="text-slate-600 text-xs leading-relaxed max-w-2xl">{metrics.plainEnglishExplanation}</p>
@@ -438,36 +614,44 @@ export const FingerTappingTest: React.FC<Props> = ({ onComplete, savedMetrics })
 
           {/* Metric Cards */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-            <div className="p-3.5 bg-white border border-slate-200 rounded-xl shadow-xs">
+            <div className="p-3.5 bg-white border border-[#E0EFFA] rounded-xl shadow-xs">
               <span className="text-slate-500 block text-[11px] font-medium">Tapping Cadence</span>
-              <strong className="text-lg text-teal-700 font-mono">{metrics.tapsPerMinute}</strong>
-              <span className="text-slate-400 block text-[10px]">taps per minute</span>
+              <strong className="text-lg text-cyan-700 font-mono">{metrics.tapsPerMinute}</strong>
+              <span className="text-slate-400 block text-[10px]">
+                {metrics.tapsPerSecond ? `${metrics.tapsPerSecond} taps/s` : `${(metrics.tapsPerMinute / 60).toFixed(1)} taps/s`}
+              </span>
             </div>
 
-            <div className="p-3.5 bg-white border border-slate-200 rounded-xl shadow-xs">
+            <div className="p-3.5 bg-white border border-[#E0EFFA] rounded-xl shadow-xs">
               <span className="text-slate-500 block text-[11px] font-medium">Mean Inter-Tap Interval</span>
               <strong className="text-lg text-navy-800 font-mono">{metrics.meanInterTapIntervalMs} ms</strong>
               <span className="text-slate-400 block text-[10px]">±{metrics.interTapIntervalStdMs} ms variation</span>
             </div>
 
-            <div className="p-3.5 bg-white border border-slate-200 rounded-xl shadow-xs">
-              <span className="text-slate-500 block text-[11px] font-medium">Rhythm Variability (CV)</span>
-              <strong className="text-lg text-navy-800 font-mono">{metrics.rhythmCvPercent}%</strong>
-              <span className="text-slate-400 block text-[10px]">coefficient of variation</span>
+            <div className="p-3.5 bg-white border border-[#E0EFFA] rounded-xl shadow-xs">
+              <span className="text-slate-500 block text-[11px] font-medium">Rhythm Variation (CV)</span>
+              <strong className="text-lg text-navy-800 font-mono">
+                {metrics.totalTaps >= 3 ? `${metrics.rhythmCvPercent}%` : 'N/A (< 3 taps)'}
+              </strong>
+              <span className="text-slate-400 block text-[10px]">Lower is more regular</span>
             </div>
 
-            <div className="p-3.5 bg-white border border-slate-200 rounded-xl shadow-xs">
-              <span className="text-slate-500 block text-[11px] font-medium">Amplitude Fatigue Ratio</span>
-              <strong className="text-lg text-navy-800 font-mono">{metrics.amplitudeFatigueRatio}</strong>
-              <span className="text-slate-400 block text-[10px]">final vs initial ratio</span>
+            <div className="p-3.5 bg-white border border-[#E0EFFA] rounded-xl shadow-xs">
+              <span className="text-slate-500 block text-[11px] font-medium">Amplitude Fatigue</span>
+              <strong className="text-lg text-navy-800 font-mono">{metrics.amplitudeFatigueRatio}x</strong>
+              <span className="text-slate-400 block text-[10px]">
+                {metrics.amplitudeFatiguePct !== undefined && metrics.amplitudeFatiguePct !== null
+                  ? `${metrics.amplitudeFatiguePct}% decrement`
+                  : 'Initial vs late amplitude'}
+              </span>
             </div>
           </div>
 
           {/* Recharts Distance Waveform */}
-          <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-xs space-y-2">
+          <div className="p-4 rounded-xl bg-white border border-[#E0EFFA] shadow-xs space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-navy-800 flex items-center gap-1.5">
-                <Activity className="w-3.5 h-3.5 text-teal-600" />
+                <Activity className="w-3.5 h-3.5 text-cyan-600" />
                 <span>Thumb-Index Distance Trajectory</span>
               </span>
               <span className="text-[10px] text-slate-500">Normalized Distance vs Time</span>
@@ -484,7 +668,7 @@ export const FingerTappingTest: React.FC<Props> = ({ onComplete, savedMetrics })
                       formatter={(val: any) => [`${val}`, 'Normalized Distance']}
                       labelFormatter={(t) => `Time: ${t}s`}
                     />
-                    <Line type="monotone" dataKey="displacement" stroke="#0F766E" strokeWidth={1.5} dot={false} />
+                    <Line type="monotone" dataKey="displacement" stroke="#0ea5e9" strokeWidth={1.5} dot={false} />
                   </LineChart>
                 </ResponsiveContainer>
               ) : (
@@ -494,7 +678,7 @@ export const FingerTappingTest: React.FC<Props> = ({ onComplete, savedMetrics })
           </div>
 
           {/* Collapsible Technical Details */}
-          <div className="border border-slate-200 rounded-xl overflow-hidden bg-white shadow-xs text-xs">
+          <div className="border border-[#E0EFFA] rounded-xl overflow-hidden bg-white shadow-xs text-xs">
             <button
               type="button"
               onClick={() => setShowTechnical(!showTechnical)}
@@ -526,9 +710,15 @@ export const FingerTappingTest: React.FC<Props> = ({ onComplete, savedMetrics })
                 </div>
 
                 {metrics.technicalDetails && (
-                  <div className="pt-2 border-t border-slate-200 flex gap-4 text-slate-500">
+                  <div className="pt-2 border-t border-slate-200 flex flex-wrap gap-4 text-slate-500">
                     <span>Close Threshold: {metrics.technicalDetails.close_threshold}</span>
                     <span>Open Threshold: {metrics.technicalDetails.open_threshold}</span>
+                    {metrics.technicalDetails.min_excursion && (
+                      <span>Min Excursion: {metrics.technicalDetails.min_excursion}</span>
+                    )}
+                    {metrics.technicalDetails.taps_per_second && (
+                      <span>Taps/sec: {metrics.technicalDetails.taps_per_second}</span>
+                    )}
                   </div>
                 )}
               </div>

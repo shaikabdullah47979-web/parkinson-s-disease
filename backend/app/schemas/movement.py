@@ -61,10 +61,12 @@ class TappingAnalysisResponse(BaseModel):
     total_taps: int
     validated_taps: int
     taps_per_minute: float
+    taps_per_second: float = 0.0
     mean_iti_ms: float
     iti_std_ms: float
     rhythm_cv_pct: float
     amplitude_fatigue_ratio: float
+    amplitude_fatigue_pct: Optional[float] = None
     tracking_continuity_pct: float
     duration_seconds: float
     tap_events: List[TapEvent] = []

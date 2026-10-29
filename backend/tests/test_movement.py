@@ -92,7 +92,66 @@ def test_finger_tapping_synthetic_analysis():
     res = movement_service.analyze_finger_tapping(req)
     assert res.status == "Completed"
     assert res.total_taps >= 18
+    assert res.validated_taps == res.total_taps
     assert abs(res.taps_per_minute - 120.0) <= 15.0
+    assert abs(res.taps_per_second - 2.0) <= 0.3
+
+def test_finger_tapping_stationary_hand_rejection():
+    """Verify stationary hand with tracking noise produces zero false taps."""
+    duration = 10.0
+    times = np.linspace(0.0, duration, 300) * 1000.0
+    # Stationary open hand with subpixel noise around 0.50
+    np.random.seed(42)
+    dists = 0.50 + np.random.normal(0, 0.015, len(times))
+
+    req = TappingAnalysisRequest(
+        timestamps_ms=times.tolist(),
+        distances=dists.tolist(),
+        total_delivered_frames=len(times),
+        duration_seconds=duration
+    )
+    res = movement_service.analyze_finger_tapping(req)
+    assert res.total_taps == 0
+    assert res.validated_taps == 0
+    assert res.status == "Inconclusive"
+    assert res.rhythm_cv_pct == 0.0
+
+def test_finger_tapping_amplitude_fatigue_decrement():
+    """Verify amplitude fatigue correctly calculates reduction percentage."""
+    duration = 10.0
+    times = np.linspace(0.0, duration, 300) * 1000.0
+    # 2 Hz tapping where amplitude drops from 0.8 to 0.4 over time
+    envelope = np.linspace(0.8, 0.4, 300)
+    dists = 0.25 + envelope * 0.5 * (1.0 + np.cos(2 * np.pi * 2.0 * (times / 1000.0)))
+
+    req = TappingAnalysisRequest(
+        timestamps_ms=times.tolist(),
+        distances=dists.tolist(),
+        total_delivered_frames=len(times),
+        duration_seconds=duration
+    )
+    res = movement_service.analyze_finger_tapping(req)
+    assert res.status == "Completed"
+    assert res.total_taps >= 18
+    assert res.amplitude_fatigue_ratio < 0.80
+    assert res.amplitude_fatigue_pct > 20.0
+
+def test_finger_tapping_few_taps_cv_safety():
+    """Verify CV calculation doesn't crash or return invalid percentages with < 3 taps."""
+    # 20 frames, with exactly 2 taps (dips to 0.2 separated by 300ms)
+    dists = [0.7] * 20
+    dists[5] = 0.2
+    dists[12] = 0.2
+    req = TappingAnalysisRequest(
+        timestamps_ms=[i * 50.0 for i in range(len(dists))],
+        distances=dists,
+        total_delivered_frames=len(dists),
+        duration_seconds=1.0
+    )
+    res = movement_service.analyze_finger_tapping(req)
+    assert res.total_taps == 2
+    assert res.status == "Inconclusive"
+    assert res.rhythm_cv_pct == 0.0
 
 def test_api_endpoints_via_http():
     """Verify movement HTTP endpoints respond with HTTP 200 and schema validation."""

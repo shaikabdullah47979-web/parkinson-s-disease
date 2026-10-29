@@ -276,78 +276,111 @@ class MovementService:
                 total_taps=0,
                 validated_taps=0,
                 taps_per_minute=0.0,
+                taps_per_second=0.0,
                 mean_iti_ms=0.0,
                 iti_std_ms=0.0,
                 rhythm_cv_pct=0.0,
                 amplitude_fatigue_ratio=1.0,
+                amplitude_fatigue_pct=0.0,
                 tracking_continuity_pct=0.0,
                 duration_seconds=req.duration_seconds or 0.0,
                 signal_quality="Poor",
                 plain_english_title="Insufficient Finger Tracking Data",
-                plain_english_explanation="The camera lost view of your fingers during the test.",
+                plain_english_explanation="The camera did not capture enough frames with finger landmarks clearly visible (minimum 15 frames required).",
                 recommended_action="Ensure your hand is facing the camera with your thumb and index fingers spread."
             )
 
         times_ms = np.array(req.timestamps_ms, dtype=np.float64)
         dists = np.array(req.distances, dtype=np.float64)
         
-        total_sec = max(0.1, (times_ms[-1] - times_ms[0]) / 1000.0)
+        total_sec = max(0.5, (times_ms[-1] - times_ms[0]) / 1000.0)
+        eval_sec = max(total_sec, float(req.duration_seconds or total_sec))
 
-        # Dynamic Threshold Calibration based on distance distribution
-        q20 = float(np.percentile(dists, 20))
-        q80 = float(np.percentile(dists, 80))
-        close_thresh = q20 + 0.35 * (q80 - q20)
-        open_thresh = q20 + 0.65 * (q80 - q20)
+        # Dynamic Threshold Calibration with jitter guards
+        # For a genuine tapping motion, distance moves between close (~0.25) and open (~0.70+).
+        p10 = float(np.percentile(dists, 10))
+        p90 = float(np.percentile(dists, 90))
+        spread = p90 - p10
+
+        if spread >= 0.20:
+            # Active movement detected: adapt thresholds to user's range
+            close_thresh = float(np.clip(p10 + 0.30 * spread, 0.20, 0.38))
+            open_thresh = float(np.clip(p10 + 0.65 * spread, close_thresh + 0.12, 0.75))
+            min_excursion = max(0.12, 0.25 * spread)
+        else:
+            # Low range / stationary hand: use standard fixed clinical boundaries
+            close_thresh = 0.30
+            open_thresh = 0.48
+            min_excursion = 0.15
 
         is_closed = False
         tap_times: List[float] = []
         tap_amps: List[float] = []
-        current_max_amp = dists[0]
+        cycle_max_dist = dists[0]
 
         for i in range(len(dists)):
             d = dists[i]
             t = times_ms[i]
-            if d > current_max_amp:
-                current_max_amp = d
 
-            if not is_closed and d <= close_thresh:
-                # Refractory period filter: minimum 100ms between legitimate taps
-                if len(tap_times) == 0 or (t - tap_times[-1]) >= 100.0:
-                    is_closed = True
-                    tap_times.append(t)
-                    tap_amps.append(current_max_amp)
-                    current_max_amp = d
-            elif is_closed and d >= open_thresh:
-                is_closed = False
+            if d > cycle_max_dist:
+                cycle_max_dist = d
+
+            if not is_closed:
+                # Transition into tap closure: distance must drop below close_thresh,
+                # AND there must have been sufficient excursion (opening) prior to tap,
+                # AND refractory period of at least 100ms from last tap
+                if d <= close_thresh and (cycle_max_dist - d) >= min_excursion:
+                    if len(tap_times) == 0 or (t - tap_times[-1]) >= 100.0:
+                        is_closed = True
+                        tap_times.append(t)
+                        tap_amps.append(float(cycle_max_dist))
+                        cycle_max_dist = d
+            else:
+                # Hand is closed; wait until fingers open past open_thresh to arm next tap
+                if d >= open_thresh:
+                    is_closed = False
+                    cycle_max_dist = d
 
         total_taps = len(tap_times)
-        
-        # Validated taps (filter outliers with unrealistic ITIs < 120ms or > 2000ms)
+        validated_taps = total_taps
+
+        # Tap events & inter-tap interval calculation
         tap_events: List[TapEvent] = []
         itis: List[float] = []
-        for i in range(1, len(tap_times)):
-            interval = tap_times[i] - tap_times[i-1]
-            itis.append(interval)
+        for i in range(total_taps):
+            t_sec = round((tap_times[i] - times_ms[0]) / 1000.0, 2)
+            if i == 0:
+                interval = 0.0
+            else:
+                interval = round(tap_times[i] - tap_times[i - 1], 1)
+                itis.append(interval)
+
             tap_events.append(TapEvent(
-                time_sec=round((tap_times[i] - times_ms[0]) / 1000.0, 2),
-                interval_ms=round(interval, 1),
+                time_sec=t_sec,
+                interval_ms=interval,
                 amplitude=round(tap_amps[i], 3)
             ))
 
         mean_iti = float(np.mean(itis)) if len(itis) > 0 else 0.0
-        std_iti = float(np.std(itis)) if len(itis) > 0 else 0.0
-        cv_pct = float((std_iti / mean_iti) * 100.0) if mean_iti > 0 else 0.0
-        tpm = float((total_taps / total_sec) * 60.0)
+        # Use sample standard deviation (ddof=1) when >= 2 intervals, else 0.0
+        std_iti = float(np.std(itis, ddof=1)) if len(itis) >= 2 else 0.0
+        cv_pct = float((std_iti / mean_iti) * 100.0) if mean_iti > 0.0 and len(itis) >= 2 else 0.0
 
-        # Amplitude fatigue: compare initial taps vs final taps
+        # Cadence calculation based on active recording duration
+        tps = float(total_taps / eval_sec) if eval_sec > 0 else 0.0
+        tpm = float(tps * 60.0)
+
+        # Amplitude fatigue calculation (first 3 vs last 3 taps)
         fatigue_ratio = 1.0
+        fatigue_pct = 0.0
         if len(tap_amps) >= 6:
             initial_mean = float(np.mean(tap_amps[:3]))
             final_mean = float(np.mean(tap_amps[-3:]))
             if initial_mean > 0.01:
                 fatigue_ratio = round(final_mean / initial_mean, 2)
+                fatigue_pct = round((1.0 - fatigue_ratio) * 100.0, 1)
 
-        # Chart points
+        # Distance series downsampled for telemetry charts
         dist_points: List[MotionPoint] = []
         step = max(1, len(times_ms) // 150)
         for i in range(0, len(times_ms), step):
@@ -356,29 +389,51 @@ class MovementService:
                 displacement=round(float(dists[i]), 3)
             ))
 
-        status = "Completed" if total_taps >= 5 else "Inconclusive"
-        pe_title = f"{total_taps} Taps Recorded ({round(tpm, 1)} Taps/Min)" if total_taps >= 5 else "Inconclusive Tapping Activity"
-        pe_exp = f"Rhythm consistency variation was {round(cv_pct, 1)}% with an amplitude fatigue ratio of {fatigue_ratio}." if total_taps >= 5 else "Fewer than 5 clear finger taps were recognized."
-        pe_act = "Maintain a steady, rhythmic cadence for the best measurement consistency."
+        continuity = round((n_raw / max(1, delivered_frames)) * 100.0, 1)
+
+        if total_taps < 5:
+            status = "Inconclusive"
+            sig_qual = "Poor" if continuity < 60.0 else "Moderate"
+            pe_title = f"{total_taps} Taps Recorded (Inconclusive)"
+            pe_exp = f"Only {total_taps} distinct finger tap cycles were detected over {round(eval_sec, 1)}s. At least 5 continuous taps are required for reliable cadence and rhythm assessment."
+            pe_act = "Spread your fingers wide between taps and tap steadily facing the camera."
+        else:
+            status = "Completed"
+            sig_qual = "Good" if continuity >= 75.0 else "Moderate"
+            pe_title = f"{total_taps} Validated Taps ({round(tpm, 1)} Taps/Min · {round(tps, 1)} Taps/s)"
+            fatigue_desc = (
+                f"{abs(fatigue_pct)}% amplitude reduction (decrement)" if fatigue_pct > 0
+                else f"stable amplitude ({fatigue_ratio}x initial)"
+            )
+            pe_exp = f"Tapping cadence was {round(tps, 1)} taps/s ({round(tpm, 1)} taps/min) with a rhythm variation (CV) of {round(cv_pct, 1)}% and {fatigue_desc}."
+            pe_act = "Maintain a steady, rhythmic cadence for the best measurement consistency."
 
         return TappingAnalysisResponse(
             status=status,
             total_taps=total_taps,
-            validated_taps=len(tap_events),
+            validated_taps=validated_taps,
             taps_per_minute=round(tpm, 1),
+            taps_per_second=round(tps, 2),
             mean_iti_ms=round(mean_iti, 1),
             iti_std_ms=round(std_iti, 1),
             rhythm_cv_pct=round(cv_pct, 1),
             amplitude_fatigue_ratio=fatigue_ratio,
-            tracking_continuity_pct=round((n_raw / max(1, delivered_frames)) * 100.0, 1),
-            duration_seconds=round(total_sec, 1),
+            amplitude_fatigue_pct=fatigue_pct,
+            tracking_continuity_pct=continuity,
+            duration_seconds=round(eval_sec, 1),
             tap_events=tap_events,
             distance_series=dist_points,
-            signal_quality="Good" if total_taps >= 10 else "Moderate",
+            signal_quality=sig_qual,
             plain_english_title=pe_title,
             plain_english_explanation=pe_exp,
             recommended_action=pe_act,
-            technical_details={"close_threshold": round(close_thresh, 3), "open_threshold": round(open_thresh, 3)}
+            technical_details={
+                "close_threshold": round(close_thresh, 3),
+                "open_threshold": round(open_thresh, 3),
+                "min_excursion": round(min_excursion, 3),
+                "taps_per_second": round(tps, 2),
+                "evaluated_seconds": round(eval_sec, 1)
+            }
         )
 
     @staticmethod

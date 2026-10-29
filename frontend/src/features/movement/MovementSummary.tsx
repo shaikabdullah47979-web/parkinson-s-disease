@@ -247,9 +247,9 @@ export const MovementSummary: React.FC<Props> = ({ report, patient, onReset }) =
               <div className="text-slate-800 font-medium">{fingerTapping.plainEnglishTitle} — <span className="text-slate-500">{fingerTapping.plainEnglishExplanation}</span></div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-slate-600">
                 <div>Total Validated: <strong className="text-navy-800 font-mono">{fingerTapping.validatedTaps} taps</strong></div>
-                <div>Cadence: <strong className="text-teal-700 font-mono">{fingerTapping.tapsPerMinute} taps/min</strong></div>
+                <div>Cadence: <strong className="text-teal-700 font-mono">{fingerTapping.tapsPerMinute} taps/min {fingerTapping.tapsPerSecond ? `(${fingerTapping.tapsPerSecond} taps/s)` : `(${(fingerTapping.tapsPerMinute / 60).toFixed(1)} taps/s)`}</strong></div>
                 <div>Rhythm Variability: <strong className="text-navy-800 font-mono">CV {fingerTapping.rhythmCvPercent}%</strong></div>
-                <div>Fatigue Ratio: <strong className="text-navy-800 font-mono">{fingerTapping.amplitudeFatigueRatio}x</strong></div>
+                <div>Fatigue Ratio: <strong className="text-navy-800 font-mono">{fingerTapping.amplitudeFatigueRatio}x {fingerTapping.amplitudeFatiguePct !== undefined && fingerTapping.amplitudeFatiguePct !== null ? `(${fingerTapping.amplitudeFatiguePct}% dec)` : ''}</strong></div>
               </div>
             </div>
           ) : (

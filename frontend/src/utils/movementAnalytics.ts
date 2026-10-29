@@ -48,10 +48,12 @@ export interface TappingMetrics {
   totalTaps: number;
   validatedTaps: number;
   tapsPerMinute: number;
+  tapsPerSecond?: number;
   meanInterTapIntervalMs: number;
   interTapIntervalStdMs: number;
   rhythmCvPercent: number;
   amplitudeFatigueRatio: number;
+  amplitudeFatiguePct?: number | null;
   trackingContinuityPct: number;
   status: 'Completed' | 'Inconclusive' | 'Interrupted';
   signalQuality: 'Good' | 'Moderate' | 'Poor';
@@ -59,7 +61,7 @@ export interface TappingMetrics {
   plainEnglishExplanation: string;
   recommendedAction: string;
   distanceSeries: MotionPoint[];
-  tapHistory: { timestamp: number; intervalMs: number; amplitude: number }[];
+  tapHistory: any[];
   technicalDetails?: Record<string, any>;
 }
 
@@ -272,10 +274,12 @@ export async function analyzeTappingKinematics(
         totalTaps: data.total_taps,
         validatedTaps: data.validated_taps,
         tapsPerMinute: data.taps_per_minute,
+        tapsPerSecond: data.taps_per_second ?? (data.taps_per_minute ? parseFloat((data.taps_per_minute / 60).toFixed(2)) : 0),
         meanInterTapIntervalMs: data.mean_iti_ms,
         interTapIntervalStdMs: data.iti_std_ms,
         rhythmCvPercent: data.rhythm_cv_pct,
         amplitudeFatigueRatio: data.amplitude_fatigue_ratio,
+        amplitudeFatiguePct: data.amplitude_fatigue_pct ?? (data.amplitude_fatigue_ratio ? Math.round((1.0 - data.amplitude_fatigue_ratio) * 100) : 0),
         trackingContinuityPct: data.tracking_continuity_pct,
         status: data.status,
         signalQuality: data.signal_quality,
@@ -291,29 +295,149 @@ export async function analyzeTappingKinematics(
     console.warn('Backend tapping analysis fallback:', err);
   }
 
-  // Local Fallback
+  // Local Fallback Algorithm (Honest calculations matching backend state machine)
   const n = distances.length;
   const continuity = deliveredFrames > 0 ? Math.min(100, (n / deliveredFrames) * 100) : 100;
 
+  if (n < 15) {
+    return {
+      durationSeconds,
+      deliveredFrames,
+      processedFrames: n,
+      totalTaps: 0,
+      validatedTaps: 0,
+      tapsPerMinute: 0,
+      tapsPerSecond: 0,
+      meanInterTapIntervalMs: 0,
+      interTapIntervalStdMs: 0,
+      rhythmCvPercent: 0,
+      amplitudeFatigueRatio: 1.0,
+      amplitudeFatiguePct: 0,
+      trackingContinuityPct: parseFloat(continuity.toFixed(1)),
+      status: 'Inconclusive',
+      signalQuality: 'Poor',
+      plainEnglishTitle: 'Insufficient Tracking Data',
+      plainEnglishExplanation: 'Fewer than 15 valid finger tracking frames were recorded.',
+      recommendedAction: 'Retry test with your hand held clearly within camera view.',
+      distanceSeries: [],
+      tapHistory: []
+    };
+  }
+
+  const sorted = [...distances].sort((a, b) => a - b);
+  const p10 = sorted[Math.floor(n * 0.10)];
+  const p90 = sorted[Math.floor(n * 0.90)];
+  const spread = p90 - p10;
+
+  let closeThresh = 0.30;
+  let openThresh = 0.48;
+  let minExcursion = 0.15;
+
+  if (spread >= 0.20) {
+    closeThresh = Math.min(0.38, Math.max(0.20, p10 + 0.30 * spread));
+    openThresh = Math.min(0.75, Math.max(closeThresh + 0.12, p10 + 0.65 * spread));
+    minExcursion = Math.max(0.12, 0.25 * spread);
+  }
+
+  let isClosed = false;
+  const tapTimes: number[] = [];
+  const tapAmps: number[] = [];
+  let maxAmp = distances[0];
+
+  for (let i = 0; i < n; i++) {
+    const d = distances[i];
+    const t = timestampsMs[i];
+    if (d > maxAmp) maxAmp = d;
+
+    if (!isClosed) {
+      if (d <= closeThresh && (maxAmp - d) >= minExcursion) {
+        if (tapTimes.length === 0 || (t - tapTimes[tapTimes.length - 1]) >= 100) {
+          isClosed = true;
+          tapTimes.push(t);
+          tapAmps.push(maxAmp);
+          maxAmp = d;
+        }
+      }
+    } else if (d >= openThresh) {
+      isClosed = false;
+      maxAmp = d;
+    }
+  }
+
+  const totalTaps = tapTimes.length;
+  const validatedTaps = totalTaps;
+  const totalSec = Math.max(0.5, (timestampsMs[n - 1] - timestampsMs[0]) / 1000);
+  const evalSec = Math.max(totalSec, durationSeconds || totalSec);
+  const tps = parseFloat((totalTaps / evalSec).toFixed(2));
+  const tpm = parseFloat((tps * 60).toFixed(1));
+
+  const itis: number[] = [];
+  const tapEvents: any[] = [];
+  for (let i = 0; i < totalTaps; i++) {
+    const interval = i === 0 ? 0 : tapTimes[i] - tapTimes[i - 1];
+    if (i > 0) itis.push(interval);
+    tapEvents.push({
+      time_sec: parseFloat(((tapTimes[i] - timestampsMs[0]) / 1000).toFixed(2)),
+      interval_ms: parseFloat(interval.toFixed(1)),
+      amplitude: parseFloat(tapAmps[i].toFixed(3))
+    });
+  }
+
+  const meanIti = itis.length > 0 ? itis.reduce((a, b) => a + b, 0) / itis.length : 0;
+  const variance = itis.length >= 2 ? itis.reduce((sum, val) => sum + Math.pow(val - meanIti, 2), 0) / (itis.length - 1) : 0;
+  const stdIti = Math.sqrt(variance);
+  const cvPct = meanIti > 0 && itis.length >= 2 ? parseFloat(((stdIti / meanIti) * 100).toFixed(1)) : 0;
+
+  let fatigueRatio = 1.0;
+  let fatiguePct = 0;
+  if (tapAmps.length >= 6) {
+    const initMean = (tapAmps[0] + tapAmps[1] + tapAmps[2]) / 3;
+    const finMean = (tapAmps[tapAmps.length - 1] + tapAmps[tapAmps.length - 2] + tapAmps[tapAmps.length - 3]) / 3;
+    if (initMean > 0.01) {
+      fatigueRatio = parseFloat((finMean / initMean).toFixed(2));
+      fatiguePct = parseFloat(((1.0 - fatigueRatio) * 100).toFixed(1));
+    }
+  }
+
+  const distPoints: MotionPoint[] = [];
+  const step = Math.max(1, Math.floor(n / 100));
+  for (let i = 0; i < n; i += step) {
+    distPoints.push({
+      time_sec: parseFloat(((timestampsMs[i] - timestampsMs[0]) / 1000).toFixed(2)),
+      displacement: parseFloat(distances[i].toFixed(3))
+    });
+  }
+
+  const isCompleted = totalTaps >= 5;
+  const peTitle = isCompleted
+    ? `${totalTaps} Validated Taps (${tpm} Taps/Min · ${tps} Taps/s)`
+    : `${totalTaps} Taps Recorded (Inconclusive)`;
+  const fatigueDesc = fatiguePct > 0 ? `${Math.abs(fatiguePct)}% amplitude reduction` : `stable amplitude (${fatigueRatio}x initial)`;
+  const peExp = isCompleted
+    ? `Tapping cadence was ${tps} taps/s with rhythm variation (CV) of ${cvPct}% and ${fatigueDesc}.`
+    : `Fewer than 5 distinct tap cycles were detected over ${evalSec.toFixed(1)}s.`;
+
   return {
-    durationSeconds,
+    durationSeconds: parseFloat(evalSec.toFixed(1)),
     deliveredFrames,
     processedFrames: n,
-    totalTaps: 0,
-    validatedTaps: 0,
-    tapsPerMinute: 0,
-    meanInterTapIntervalMs: 0,
-    interTapIntervalStdMs: 0,
-    rhythmCvPercent: 0,
-    amplitudeFatigueRatio: 1.0,
+    totalTaps,
+    validatedTaps,
+    tapsPerMinute: tpm,
+    tapsPerSecond: tps,
+    meanInterTapIntervalMs: parseFloat(meanIti.toFixed(1)),
+    interTapIntervalStdMs: parseFloat(stdIti.toFixed(1)),
+    rhythmCvPercent: cvPct,
+    amplitudeFatigueRatio: fatigueRatio,
+    amplitudeFatiguePct: fatiguePct,
     trackingContinuityPct: parseFloat(continuity.toFixed(1)),
-    status: 'Inconclusive',
-    signalQuality: 'Moderate',
-    plainEnglishTitle: 'Tapping Test Recorded',
-    plainEnglishExplanation: 'Finger landmarks recorded. Connect backend for complete event detection.',
-    recommendedAction: 'Retry test with fingers facing camera.',
-    distanceSeries: [],
-    tapHistory: []
+    status: isCompleted ? 'Completed' : 'Inconclusive',
+    signalQuality: continuity >= 75 ? 'Good' : 'Moderate',
+    plainEnglishTitle: peTitle,
+    plainEnglishExplanation: peExp,
+    recommendedAction: isCompleted ? 'Maintain steady cadence for consistency.' : 'Spread fingers clearly and retry test.',
+    distanceSeries: distPoints,
+    tapHistory: tapEvents
   };
 }
 
