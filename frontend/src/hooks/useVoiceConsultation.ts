@@ -9,11 +9,11 @@ import { AssistantState } from '../components/consultation/AIAvatarViewport';
 
 // Initial greetings in 5 supported Indian languages
 export const INITIAL_GREETINGS: Record<SupportedLanguageCode, string> = {
-  'en-IN': "Hello, I am Dr. NeuroVoice AI. I am here to help you explore your Parkinson's motor and speech assessments. How can I assist you today?",
-  'hi-IN': "नमस्ते, मैं डॉ. न्यूरोवॉइस एआई हूँ। पार्किंसंस मोटर और लक्षण स्क्रीनिंग में आपकी सहायता के लिए मैं यहाँ हूँ। आज मैं आपकी क्या मदद कर सकता हूँ?",
-  'kn-IN': "ನಮಸ್ಕಾರ, ನಾನು ಡಾ. ನ್ಯೂರೋವಾಯ್ಸ್ ಎಐ. ಪಾರ್ಕಿನ್ಸನ್ ತಪಾಸಣೆಗೆ ನಿಮಗೆ ಸಹಾಯ ಮಾಡಲು ನಾನಿದ್ದೇನೆ. ನಾನು ಇಂದು ನಿಮಗೆ ಹೇಗೆ ಸಹಾಯ ಮಾಡಬಹುದು?",
-  'mr-IN': "नमस्कार, मी डॉ. न्यूरोव्हॉइस एआय आहे. पार्किन्सन्स लक्षणे आणि मोटर तपासणीसाठी मी येथे आहे. आज मी तुम्हाला कशी मदत करू शकेन?",
-  'ur-PK': "السلام علیکم، میں ڈاکٹر نیورو وائس اے آئی ہوں۔ پارکنسنز اسکریننگ کے لیے میں حاضر ہوں۔ آج میں آپ کی کیا مدد کر سکتا ہوں؟"
+  'en-IN': "Hello, I am Dr. AI Neurologist. I am here to help you explore your Parkinson's motor and speech assessments. How can I assist you today?",
+  'hi-IN': "नमस्ते, मैं डॉ. एआई न्यूरोलॉजिस्ट हूँ। पार्किंसंस मोटर और लक्षण स्क्रीनिंग में आपकी सहायता के लिए मैं यहाँ हूँ। आज मैं आपकी क्या मदद कर सकता हूँ?",
+  'kn-IN': "ನಮಸ್ಕಾರ, ನಾನು ಡಾ. ಎಐ ನ್ಯೂರೋಲಜಿಸ್ಟ್. ಪಾರ್ಕಿನ್ಸನ್ ತಪಾಸಣೆಗೆ ನಿಮಗೆ ಸಹಾಯ ಮಾಡಲು ನಾನಿದ್ದೇನೆ. ನಾನು ಇಂದು ನಿಮಗೆ ಹೇಗೆ ಸಹಾಯ ಮಾಡಬಹುದು?",
+  'mr-IN': "नमस्कार, मी डॉ. एआय न्यूरोलॉजिस्ट आहे. पार्किन्सन्स लक्षणे आणि मोटर तपासणीसाठी मी येथे आहे. आज मी तुम्हाला कशी मदत करू शकेन?",
+  'ur-PK': "السلام علیکم، میں ڈاکٹر اے آئی نیورولوجسٹ ہوں۔ پارکنسنز اسکریننگ کے لیے میں حاضر ہوں۔ آج میں آپ کی کیا مدد کر سکتا ہوں؟"
 };
 
 // Normalize text for acoustic echo comparison across Unicode scripts
@@ -585,7 +585,7 @@ export function useVoiceConsultation(
       return true;
     } catch (err: any) {
       setIsMicActive(false);
-      setError('Microphone permission was denied. Please allow microphone access to talk with Dr. NeuroVoice AI.');
+      setError('Microphone permission was denied. Please allow microphone access to talk with Dr. AI Neurologist.');
       return false;
     }
   }, [setupSpeechRecognition, speakText]);
@@ -705,7 +705,7 @@ export function useVoiceConsultation(
     } catch (err: any) {
       console.error('Error generating summary:', err);
       const fallbackSummary: ConsultationSummary = {
-        title: 'NeuroVoice AI Consultation Record',
+        title: 'Dr. AI Neurologist Consultation Record',
         date_time: new Date().toLocaleDateString(),
         duration_seconds: durationSeconds,
         language: languageRef.current,

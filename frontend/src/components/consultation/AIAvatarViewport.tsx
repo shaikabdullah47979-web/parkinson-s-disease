@@ -1,5 +1,5 @@
-import React, { useRef, useEffect } from 'react';
-import { Sparkles, Bot } from 'lucide-react';
+import React, { useRef, useEffect, useState, useMemo } from 'react';
+import { UserCheck, Sparkles, Volume2, Mic, Brain, Stethoscope } from 'lucide-react';
 
 export type AssistantState = 'READY' | 'LISTENING' | 'PROCESSING' | 'SPEAKING';
 
@@ -7,14 +7,31 @@ interface Props {
   state: AssistantState;
   audioLevel?: number; // 0 to 100
   languageName?: string;
+  avatarSrc?: string;
 }
 
 export const AIAvatarViewport: React.FC<Props> = ({
   state,
   audioLevel = 0,
-  languageName = "English"
+  languageName = "English",
+  avatarSrc = "/assets/avatars/dr_ai_neurologist.jpg"
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const [imageLoaded, setImageLoaded] = useState<boolean>(false);
+  const [imageError, setImageError] = useState<boolean>(false);
+
+  // Preload and cache doctor portrait
+  const doctorImage = useMemo(() => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.src = avatarSrc;
+    img.onload = () => setImageLoaded(true);
+    img.onerror = () => {
+      console.warn('Avatar image failed to load, falling back to procedural doctor avatar.');
+      setImageError(true);
+    };
+    return img;
+  }, [avatarSrc]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -22,193 +39,352 @@ export const AIAvatarViewport: React.FC<Props> = ({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    let animationFrameId: number;
+    let animId: number;
     let time = 0;
 
-    // Particle nodes for holographic 3D orbital cloud
-    const particles = Array.from({ length: 48 }, (_, i) => ({
-      orbitRadius: 70 + (i % 6) * 16,
-      angle: (i / 48) * Math.PI * 2,
-      speed: 0.015 + ((i % 5) * 0.005),
-      yOffset: ((i % 7) - 3) * 18,
-      size: 2 + (i % 3) * 1.5,
-      color: i % 2 === 0 ? '#38bdf8' : '#0ea5e9'
-    }));
+    // Procedural animation state tracking
+    let currentJawOpen = 0;
+    let currentLipSpread = 0;
+    let blinkProgress = 0; // 0 = open, 1 = fully closed
+    let isBlinking = false;
+    let nextBlinkTime = performance.now() + 2500 + Math.random() * 2500;
+    let eyeGazeX = 0;
+    let eyeGazeY = 0;
+    let nextGazeTime = performance.now() + 3000;
 
-    const render = () => {
-      time += 0.03;
-      const width = canvas.width;
-      const height = canvas.height;
-      const centerX = width / 2;
-      const centerY = height / 2;
+    // Doctor facial anatomical landmark coordinates on 1024x1024 portrait
+    const FACE = {
+      width: 1024,
+      height: 1024,
+      // Left eye (viewer's left / doctor's right eye)
+      leftEye: { x: 428, y: 362, rx: 26, ry: 16 },
+      // Right eye (viewer's right / doctor's left eye)
+      rightEye: { x: 592, y: 364, rx: 26, ry: 16 },
+      // Mouth region
+      mouth: {
+        centerX: 512,
+        centerY: 504,
+        width: 136,
+        restingHeight: 22,
+        lipTopY: 492,
+        lipBottomY: 516,
+        jawY: 550
+      }
+    };
 
-      ctx.clearRect(0, 0, width, height);
+    const render = (now: number) => {
+      time += 0.025;
+      const w = canvas.width;
+      const h = canvas.height;
 
-      // Deep medical sci-fi gradient background
-      const bgGrad = ctx.createRadialGradient(centerX, centerY, 10, centerX, centerY, width * 0.7);
-      bgGrad.addColorStop(0, '#0c1b33');
-      bgGrad.addColorStop(0.6, '#081020');
-      bgGrad.addColorStop(1, '#030712');
-      ctx.fillStyle = bgGrad;
-      ctx.fillRect(0, 0, width, height);
+      ctx.clearRect(0, 0, w, h);
 
-      // Dynamic parameters based on state
-      let pulse = Math.sin(time * 2.0) * 6;
-      let coreColor = '#0ea5e9';
-      let haloColor = 'rgba(14, 165, 233, ';
-      let ringSpeed = 1.0;
+      // 1. Natural Involuntary Eye Blinking Cycle (Every 3.5 - 5.5s)
+      if (now >= nextBlinkTime && !isBlinking) {
+        isBlinking = true;
+        blinkProgress = 0;
+      }
+      if (isBlinking) {
+        blinkProgress += 0.16; // Fast natural blink closure (~130ms)
+        if (blinkProgress >= 1) {
+          isBlinking = false;
+          blinkProgress = 0;
+          nextBlinkTime = now + 3200 + Math.random() * 2800;
+        }
+      }
+
+      // 2. Micro-Saccades (Subtle natural eye gaze shifts)
+      if (now >= nextGazeTime) {
+        eyeGazeX = (Math.random() - 0.5) * 2.0;
+        eyeGazeY = (Math.random() - 0.5) * 1.5;
+        nextGazeTime = now + 2500 + Math.random() * 2000;
+      }
+
+      // 3. Subtle Camera / Head Breathing Sway & Listening Posture
+      let swayX = Math.cos(time * 0.8) * 1.2 + eyeGazeX * 0.4;
+      let swayY = Math.sin(time * 1.5) * 1.8;
+      let headTilt = 0;
 
       if (state === 'LISTENING') {
-        pulse = Math.sin(time * 4.5) * 12 + (audioLevel * 0.3);
-        coreColor = '#10b981';
-        haloColor = 'rgba(16, 185, 129, ';
-        ringSpeed = 1.5;
+        // Attentive listening nod: rhythmic gentle downward nod
+        swayY += Math.sin(time * 2.2) * 2.5;
+        headTilt = Math.sin(time * 1.1) * 0.005;
       } else if (state === 'PROCESSING') {
-        pulse = Math.sin(time * 6.0) * 8;
-        coreColor = '#818cf8';
-        haloColor = 'rgba(129, 140, 248, ';
-        ringSpeed = 3.2;
+        // Thoughtful cognitive tilt
+        headTilt = 0.009;
+        swayY -= 1.0;
       } else if (state === 'SPEAKING') {
-        pulse = Math.sin(time * 5.0) * (14 + (audioLevel * 0.4));
-        coreColor = '#06b6d4';
-        haloColor = 'rgba(6, 182, 212, ';
-        ringSpeed = 2.0;
+        // Conversational head cadence
+        swayY += Math.sin(time * 4.2) * 1.6;
+        swayX += Math.cos(time * 3.1) * 0.8;
       }
 
-      const coreRadius = Math.max(36, 52 + pulse);
+      // 4. Audio-Driven Lip-Sync Viseme Calculation
+      let targetOpen = 0;
+      let targetSpread = 0;
 
-      // 1. Outer Holographic Atmospheric Glow
-      const glowGrad = ctx.createRadialGradient(centerX, centerY, coreRadius * 0.4, centerX, centerY, coreRadius * 2.5);
-      glowGrad.addColorStop(0, haloColor + '0.35)');
-      glowGrad.addColorStop(0.5, haloColor + '0.12)');
-      glowGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
-      ctx.fillStyle = glowGrad;
-      ctx.beginPath();
-      ctx.arc(centerX, centerY, coreRadius * 2.5, 0, Math.PI * 2);
-      ctx.fill();
-
-      // 2. Concentric Radiating Rings in Speaking & Listening states
-      if (state === 'SPEAKING' || state === 'LISTENING') {
-        for (let r = 1; r <= 3; r++) {
-          const waveRadius = coreRadius + ((time * 30 * r) % 110);
-          const alpha = Math.max(0, 1 - (waveRadius / (coreRadius + 110)));
-          ctx.beginPath();
-          ctx.arc(centerX, centerY, waveRadius, 0, Math.PI * 2);
-          ctx.strokeStyle = haloColor + (alpha * 0.5) + ')';
-          ctx.lineWidth = 1.5;
-          ctx.stroke();
-        }
+      if (state === 'SPEAKING' && audioLevel > 8) {
+        // Convert audio level (0-100) to anatomical mouth aperture
+        const normalized = Math.min(1.0, audioLevel / 80);
+        targetOpen = normalized * 18; // Up to 18px opening
+        targetSpread = (normalized > 0.5 ? (normalized - 0.5) * 2 : 0) * 8;
       }
 
-      // 3. Holographic 3D Orbiting Particles (Depth projection)
-      particles.forEach((p) => {
-        p.angle += p.speed * ringSpeed;
-        const currentRadius = p.orbitRadius + (pulse * 0.5);
+      // Smooth mouth lerp for organic elastic muscle motion
+      currentJawOpen += (targetOpen - currentJawOpen) * 0.32;
+      currentLipSpread += (targetSpread - currentLipSpread) * 0.28;
 
-        // 3D elliptical orbit projection
-        const x = centerX + Math.cos(p.angle) * currentRadius;
-        const z = Math.sin(p.angle); // -1 (behind) to +1 (in front)
-        const y = centerY + Math.sin(p.angle) * (currentRadius * 0.35) + p.yOffset;
+      // Ensure rapid mouth closure when audio terminates or during interruption
+      if (state !== 'SPEAKING' || audioLevel < 5) {
+        currentJawOpen *= 0.65;
+        currentLipSpread *= 0.65;
+        if (currentJawOpen < 0.2) currentJawOpen = 0;
+        if (currentLipSpread < 0.2) currentLipSpread = 0;
+      }
 
-        const scale = 0.65 + (z + 1) * 0.35; // 0.65 to 1.35 scale
-        const alpha = 0.2 + (z + 1) * 0.4;
+      ctx.save();
 
-        ctx.beginPath();
-        ctx.arc(x, y, p.size * scale, 0, Math.PI * 2);
-        ctx.fillStyle = haloColor + alpha + ')';
-        ctx.fill();
+      // Clinical gradient backdrop behind doctor portrait
+      const bg = ctx.createLinearGradient(0, 0, 0, h);
+      bg.addColorStop(0, '#091528');
+      bg.addColorStop(1, '#020617');
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, w, h);
 
-        // Connect nearby particles with subtle neural synapse lines
-        if (z > 0 && state === 'PROCESSING') {
-          ctx.beginPath();
-          ctx.moveTo(x, y);
-          ctx.lineTo(centerX, centerY);
-          ctx.strokeStyle = haloColor + '0.08)';
-          ctx.lineWidth = 1;
-          ctx.stroke();
+      if (imageLoaded && !imageError) {
+        // Apply head sway transformation centered on doctor face
+        ctx.save();
+        ctx.translate(w / 2 + swayX, h / 2 + swayY);
+        ctx.rotate(headTilt);
+        ctx.translate(-w / 2, -h / 2);
+
+        // Aspect fit and center 1024x1024 photo into viewport
+        const scale = Math.max(w / FACE.width, h / FACE.height);
+        const renderW = FACE.width * scale;
+        const renderH = FACE.height * scale;
+        const offsetX = (w - renderW) / 2;
+        const offsetY = (h - renderH) / 2;
+
+        // Draw Base Doctor Portrait
+        ctx.drawImage(doctorImage, offsetX, offsetY, renderW, renderH);
+
+        // Dynamic coordinate helpers in canvas space
+        const toCanvasX = (imgX: number) => offsetX + imgX * scale;
+        const toCanvasY = (imgY: number) => offsetY + imgY * scale;
+
+        // --- 5. NATURAL BLINKING OVERLAY ---
+        if (blinkProgress > 0) {
+          const blinkFactor = Math.sin(blinkProgress * Math.PI); // Smooth 0 -> 1 -> 0 curve
+
+          const renderEyelid = (eye: typeof FACE.leftEye) => {
+            const cx = toCanvasX(eye.x + eyeGazeX);
+            const cy = toCanvasY(eye.y + eyeGazeY);
+            const rx = eye.rx * scale * 1.08;
+            const ry = eye.ry * scale * 1.15;
+
+            ctx.save();
+            ctx.beginPath();
+            // Elliptical eye socket boundary
+            ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+            ctx.clip();
+
+            // Anatomical eyelid skin tone (matching doctor's eyelid pigmentation)
+            const lidGrad = ctx.createLinearGradient(cx, cy - ry, cx, cy + ry);
+            lidGrad.addColorStop(0, '#b8896c');
+            lidGrad.addColorStop(0.65, '#9d6f54');
+            lidGrad.addColorStop(1, '#6b4733'); // Eyelash border shadow
+            ctx.fillStyle = lidGrad;
+
+            // Descending upper eyelid
+            const lidY = cy - ry + (ry * 2 * blinkFactor);
+            ctx.beginPath();
+            ctx.rect(cx - rx, cy - ry, rx * 2, lidY - (cy - ry));
+            ctx.fill();
+
+            // Delicate lash line at contact edge
+            ctx.strokeStyle = 'rgba(38, 24, 18, 0.85)';
+            ctx.lineWidth = 1.6;
+            ctx.beginPath();
+            ctx.moveTo(cx - rx, lidY);
+            ctx.quadraticCurveTo(cx, lidY + 1.2, cx + rx, lidY);
+            ctx.stroke();
+
+            ctx.restore();
+          };
+
+          renderEyelid(FACE.leftEye);
+          renderEyelid(FACE.rightEye);
         }
-      });
 
-      // 4. Central 3D Shaded Glowing Sphere
-      const sphereGrad = ctx.createRadialGradient(
-        centerX - coreRadius * 0.3,
-        centerY - coreRadius * 0.35,
-        coreRadius * 0.1,
-        centerX,
-        centerY,
-        coreRadius
-      );
-      sphereGrad.addColorStop(0, '#ffffff');
-      sphereGrad.addColorStop(0.25, coreColor);
-      sphereGrad.addColorStop(0.85, '#0369a1');
-      sphereGrad.addColorStop(1, '#082f49');
+        // --- 6. REAL-TIME MULTILINGUAL LIP-SYNC & JAW DEFORMATION ---
+        if (currentJawOpen > 0.8) {
+          const mcx = toCanvasX(FACE.mouth.centerX);
+          const mcy = toCanvasY(FACE.mouth.centerY);
+          const mw = (FACE.mouth.width * 0.5 + currentLipSpread) * scale;
+          const openH = currentJawOpen * scale * 1.1;
 
-      ctx.save();
-      ctx.beginPath();
-      ctx.arc(centerX, centerY, coreRadius, 0, Math.PI * 2);
-      ctx.fillStyle = sphereGrad;
-      ctx.shadowColor = coreColor;
-      ctx.shadowBlur = 28;
-      ctx.fill();
+          ctx.save();
+
+          // 6a. Oral Cavity Interior
+          ctx.beginPath();
+          ctx.ellipse(mcx, mcy + (openH * 0.45), mw * 0.82, openH * 0.85, 0, 0, Math.PI * 2);
+
+          const mouthGrad = ctx.createRadialGradient(mcx, mcy, 2, mcx, mcy + openH * 0.5, openH * 1.2);
+          mouthGrad.addColorStop(0, '#1a090a');
+          mouthGrad.addColorStop(0.7, '#2b1013');
+          mouthGrad.addColorStop(1, '#451a1e');
+          ctx.fillStyle = mouthGrad;
+          ctx.fill();
+
+          // 6b. Subtle Upper Teeth Line (natural speech visibility)
+          if (currentJawOpen > 3.0) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.ellipse(mcx, mcy + (openH * 0.45), mw * 0.82, openH * 0.85, 0, 0, Math.PI * 2);
+            ctx.clip();
+
+            ctx.fillStyle = '#f6f3ed';
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+            ctx.shadowBlur = 2;
+            ctx.beginPath();
+            const teethW = mw * 0.62;
+            const teethH = Math.min(openH * 0.45, 5.5 * scale);
+            ctx.ellipse(mcx, mcy + 1.5, teethW, teethH, 0, 0, Math.PI);
+            ctx.fill();
+            ctx.restore();
+          }
+
+          // 6c. Lower Lip & Jaw Displacement (Seamless skin & beard warp)
+          const lowerLipSourceY = FACE.mouth.lipBottomY;
+          const lowerLipSourceH = 75; // Sample lower lip + chin/beard
+          const sx = FACE.mouth.centerX - (FACE.mouth.width * 0.6);
+          const sy = lowerLipSourceY;
+          const sw = FACE.mouth.width * 1.2;
+          const sh = lowerLipSourceH;
+
+          const dx = toCanvasX(sx);
+          const dy = toCanvasY(sy) + openH * 0.85; // Displace downward with jaw
+          const dw = sw * scale;
+          const dh = sh * scale;
+
+          ctx.save();
+          // Soft feathered clipping around lower lip and chin
+          ctx.beginPath();
+          ctx.ellipse(mcx, dy + (dh * 0.35), dw * 0.48, dh * 0.55, 0, 0, Math.PI * 2);
+          ctx.clip();
+          ctx.drawImage(doctorImage, sx, sy, sw, sh, dx, dy, dw, dh);
+
+          // Soft ambient occlusion shadow under lower lip crease
+          ctx.fillStyle = 'rgba(35, 18, 12, 0.32)';
+          ctx.beginPath();
+          ctx.ellipse(mcx, dy + 2, dw * 0.42, 2.5 * scale, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+
+          // 6d. Upper Lip Arch Feathering (preserving mustache contour)
+          const upperLipSourceY = FACE.mouth.lipTopY - 18;
+          const upperLipSourceH = 26;
+          const usx = FACE.mouth.centerX - (FACE.mouth.width * 0.55);
+          const usy = upperLipSourceY;
+          const usw = FACE.mouth.width * 1.1;
+          const ush = upperLipSourceH;
+
+          const udx = toCanvasX(usx);
+          const udy = toCanvasY(usy);
+          const udw = usw * scale;
+          const udh = ush * scale;
+
+          ctx.save();
+          ctx.beginPath();
+          ctx.ellipse(mcx, udy + (udh * 0.6), udw * 0.46, udh * 0.5, 0, 0, Math.PI * 2);
+          ctx.clip();
+          ctx.drawImage(doctorImage, usx, usy, usw, ush, udx, udy, udw, udh);
+          ctx.restore();
+
+          ctx.restore();
+        }
+
+        ctx.restore(); // Restore head transform
+      } else {
+        // Fallback procedural doctor silhouette if image is loading or unavailable
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(0, 0, w, h);
+        ctx.fillStyle = '#38bdf8';
+        ctx.font = 'bold 14px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('Initializing Dr. AI Neurologist...', w / 2, h / 2);
+      }
+
+      // --- 7. CLINICAL TELEMEDICINE VIGNETTE & LIGHTING OVERLAY ---
+      const vignette = ctx.createRadialGradient(w / 2, h / 2, w * 0.32, w / 2, h / 2, w * 0.72);
+      vignette.addColorStop(0, 'rgba(0, 0, 0, 0)');
+      vignette.addColorStop(0.7, 'rgba(3, 7, 18, 0.22)');
+      vignette.addColorStop(1, 'rgba(2, 6, 23, 0.75)');
+      ctx.fillStyle = vignette;
+      ctx.fillRect(0, 0, w, h);
+
+      // --- 8. REAL-TIME SPEAKING GLOW INDICATOR (SUBTLE CLINICAL CYAN PULSE) ---
+      if (state === 'SPEAKING' && audioLevel > 5) {
+        ctx.save();
+        const pulseAlpha = Math.min(0.35, (audioLevel / 100) * 0.4);
+        ctx.strokeStyle = `rgba(6, 182, 212, ${pulseAlpha})`;
+        ctx.lineWidth = 3;
+        ctx.strokeRect(0, 0, w, h);
+        ctx.restore();
+      }
+
       ctx.restore();
-
-      // 5. Digital Optical Grid Ring
-      ctx.save();
-      ctx.translate(centerX, centerY);
-      ctx.rotate(time * 0.25 * ringSpeed);
-      ctx.beginPath();
-      ctx.ellipse(0, 0, coreRadius * 1.45, coreRadius * 0.45, 0, 0, Math.PI * 2);
-      ctx.strokeStyle = haloColor + '0.6)';
-      ctx.lineWidth = 1.5;
-      ctx.setLineDash([4, 6]);
-      ctx.stroke();
-      ctx.restore();
-
-      animationFrameId = requestAnimationFrame(render);
+      animId = requestAnimationFrame(render);
     };
 
-    render();
+    animId = requestAnimationFrame(render);
 
     return () => {
-      cancelAnimationFrame(animationFrameId);
+      cancelAnimationFrame(animId);
     };
-  }, [state, audioLevel]);
+  }, [state, audioLevel, imageLoaded, imageError, doctorImage]);
 
+  // Status badge config
   const getStateBadge = () => {
     switch (state) {
       case 'LISTENING':
         return {
-          bg: 'bg-emerald-950/80 border-emerald-500/50 text-emerald-300',
+          bg: 'bg-emerald-950/85 border-emerald-500/50 text-emerald-300',
           dot: 'bg-emerald-400 animate-ping',
-          text: 'Listening to Patient...'
+          text: 'Listening to Patient...',
+          icon: Mic
         };
       case 'PROCESSING':
         return {
-          bg: 'bg-indigo-950/80 border-indigo-500/50 text-indigo-300',
+          bg: 'bg-indigo-950/85 border-indigo-500/50 text-indigo-300',
           dot: 'bg-indigo-400 animate-pulse',
-          text: 'Analyzing & Thinking...'
+          text: 'Analyzing & Thinking...',
+          icon: Brain
         };
       case 'SPEAKING':
         return {
-          bg: 'bg-cyan-950/80 border-cyan-500/50 text-cyan-300',
+          bg: 'bg-cyan-950/85 border-cyan-500/50 text-cyan-300',
           dot: 'bg-cyan-400 animate-pulse',
-          text: 'Speaking Response...'
+          text: 'Speaking (Multilingual)...',
+          icon: Volume2
         };
       case 'READY':
       default:
         return {
-          bg: 'bg-slate-900/80 border-slate-700/60 text-slate-300',
+          bg: 'bg-slate-900/85 border-slate-700/60 text-slate-300',
           dot: 'bg-cyan-400',
-          text: 'Ready · Waiting for User'
+          text: 'Ready · Waiting for Patient',
+          icon: UserCheck
         };
     }
   };
 
   const badge = getStateBadge();
+  const BadgeIcon = badge.icon;
 
   return (
-    <div className="relative aspect-[4/3] bg-slate-950 rounded-2xl border border-slate-200 overflow-hidden shadow-xs flex flex-col justify-between">
-      {/* 3D Canvas Visualizer */}
+    <div className="relative aspect-[4/3] bg-slate-950 rounded-2xl border border-slate-200 overflow-hidden shadow-xs flex flex-col justify-between group">
+      {/* Real-Time Canvas Video Feed */}
       <canvas
         ref={canvasRef}
         width={640}
@@ -216,36 +392,42 @@ export const AIAvatarViewport: React.FC<Props> = ({
         className="absolute inset-0 w-full h-full object-cover"
       />
 
-      {/* Top Overlay: Assistant Persona */}
-      <div className="relative z-20 p-3.5 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-cyan-950/80 border border-cyan-500/40 text-cyan-400 flex items-center justify-center shadow-xs">
-            <Bot className="w-4 h-4" />
+      {/* Top Header Overlay: Doctor Name, Credentials & Language */}
+      <div className="relative z-20 p-3.5 flex items-center justify-between bg-gradient-to-b from-slate-950/80 via-slate-950/30 to-transparent">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-xl bg-cyan-950/90 border border-cyan-500/50 text-cyan-400 flex items-center justify-center shadow-xs">
+            <Stethoscope className="w-4 h-4" />
           </div>
           <div>
-            <h4 className="text-white text-xs font-bold tracking-tight">Dr. NeuroVoice AI</h4>
-            <span className="text-[10px] text-slate-400 block -mt-0.5">Clinical Research Assistant</span>
+            <h4 className="text-white text-xs sm:text-sm font-bold tracking-tight flex items-center gap-1.5">
+              <span>Dr. AI Neurologist</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+            </h4>
+            <span className="text-[10px] text-slate-300 block -mt-0.5 font-medium">
+              AI Neurological Research Assistant
+            </span>
           </div>
         </div>
 
-        <div className="px-2.5 py-1 rounded-full bg-slate-900/80 backdrop-blur-md border border-slate-700 text-[10px] text-slate-300 flex items-center gap-1">
+        <div className="px-2.5 py-1 rounded-full bg-slate-900/80 backdrop-blur-md border border-slate-700 text-[10px] text-slate-300 flex items-center gap-1.5 shadow-xs">
           <Sparkles className="w-3 h-3 text-cyan-400" />
-          <span>{languageName}</span>
+          <span className="font-semibold">{languageName}</span>
         </div>
       </div>
 
-      {/* Bottom Overlay: AI Current State Badge */}
-      <div className="relative z-20 p-3.5 flex items-center justify-between bg-gradient-to-t from-slate-950/80 via-slate-950/30 to-transparent">
-        <div className={`px-3 py-1.5 rounded-full text-xs font-semibold border flex items-center gap-2 backdrop-blur-md ${badge.bg}`}>
+      {/* Bottom Status Overlay: Active Speech / Listening HUD */}
+      <div className="relative z-20 p-3.5 flex items-center justify-between bg-gradient-to-t from-slate-950/85 via-slate-950/40 to-transparent">
+        <div className={`px-3 py-1.5 rounded-full text-xs font-semibold border flex items-center gap-2 backdrop-blur-md shadow-xs ${badge.bg}`}>
           <span className={`w-2 h-2 rounded-full ${badge.dot}`} />
+          <BadgeIcon className="w-3.5 h-3.5" />
           <span>{badge.text}</span>
         </div>
 
-        <span className="text-[10px] text-slate-400 font-mono hidden sm:inline">
-          Gemini 2.0 Multimodal
-        </span>
+        <div className="flex items-center gap-1.5 text-[10px] text-slate-300 font-mono bg-slate-900/80 px-2.5 py-1 rounded-full border border-slate-700/60 backdrop-blur-md">
+          <span className="w-2 h-2 rounded-full bg-cyan-400 inline-block" />
+          <span>Telemedicine AI Active</span>
+        </div>
       </div>
     </div>
   );
 };
-

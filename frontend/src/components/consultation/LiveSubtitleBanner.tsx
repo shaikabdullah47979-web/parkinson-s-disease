@@ -26,7 +26,7 @@ export const LiveSubtitleBanner: React.FC<Props> = ({
   }
 
   const displayText = activeSpeaker === 'user' ? userTranscript : aiResponse;
-  const speakerLabel = activeSpeaker === 'user' ? 'You (Speaking)' : 'Dr. NeuroVoice AI';
+  const speakerLabel = activeSpeaker === 'user' ? 'You (Speaking)' : 'Dr. AI Neurologist';
 
   return (
     <div

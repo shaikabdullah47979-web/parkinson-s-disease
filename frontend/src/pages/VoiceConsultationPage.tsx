@@ -212,14 +212,14 @@ export const VoiceConsultationPage: React.FC = () => {
           />
         </div>
 
-        {/* Right Section: 3D Holographic AI Assistant Avatar */}
+        {/* Right Section: Talking AI Doctor Avatar */}
         <div className="space-y-2">
           <div className="flex items-center justify-between px-1">
             <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5 uppercase tracking-wider">
               <Sparkles className="w-3.5 h-3.5 text-cyan-600" />
-              <span>Dr. NeuroVoice AI Avatar</span>
+              <span>Dr. AI Neurologist</span>
             </span>
-            <span className="text-[11px] text-slate-400 font-medium">Multilingual Intelligence</span>
+            <span className="text-[11px] text-slate-400 font-medium">AI Neurological Research Assistant</span>
           </div>
 
           <AIAvatarViewport
@@ -241,7 +241,7 @@ export const VoiceConsultationPage: React.FC = () => {
                 Begin AI Voice Consultation
               </h2>
               <p className="text-xs text-slate-300 leading-relaxed">
-                Connect face-to-face with Dr. NeuroVoice AI for real-time educational guidance on Parkinson's disease symptoms, tremor analysis, and motor screening protocols.
+                Connect face-to-face with Dr. AI Neurologist for real-time educational guidance on Parkinson's disease symptoms, tremor analysis, and motor screening protocols.
               </p>
             </div>
 
