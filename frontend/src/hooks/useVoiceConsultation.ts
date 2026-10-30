@@ -141,6 +141,7 @@ export function useVoiceConsultation(
   const silenceTimerRef = useRef<number | null>(null);
   const pendingUtteranceRef = useRef<string>('');
   const currentInterimRef = useRef<string>('');
+  const speechWatchdogRef = useRef<number | null>(null);
 
   // Setup Web Audio Analyser with echo cancellation
   const setupAudioAnalyser = async (stream: MediaStream) => {
@@ -205,6 +206,12 @@ export function useVoiceConsultation(
 
   // Internal interrupt helper to stop ongoing AI speech immediately
   const interruptAIInternal = useCallback(() => {
+    if (speechWatchdogRef.current) {
+      clearTimeout(speechWatchdogRef.current);
+      speechWatchdogRef.current = null;
+    }
+    (window as any)._activeSpeechUtterance = null;
+
     if ('speechSynthesis' in window) {
       window.speechSynthesis.cancel();
     }
@@ -262,7 +269,7 @@ export function useVoiceConsultation(
 
     const utterance = new SpeechSynthesisUtterance(cleanSpokenText);
     utterance.volume = volume;
-    utterance.rate = 0.98;   // Calm, professional physician pacing
+    utterance.rate = 1.0;    // Natural, engaging physician conversational pace
     utterance.pitch = 0.88;  // Authentic, resonant male doctor pitch
 
     // Supported language mapping
@@ -290,7 +297,7 @@ export function useVoiceConsultation(
     const maleKeywords = [
       'male', 'man', 'david', 'mark', 'ravi', 'hemant', 'george',
       'guy', 'prabhat', 'madhav', 'rohit', 'ajay', 'rahul', 'stefan',
-      'james', 'richard', 'brian', 'tarik', 'salman', 'daniel'
+      'james', 'richard', 'brian', 'tarik', 'salman', 'daniel', 'michael'
     ];
 
     const isExplicitMale = (v: any) => {
@@ -336,7 +343,7 @@ export function useVoiceConsultation(
       utterance.voice = selectedVoice;
     }
 
-    // Track speech boundaries and word events for organic lip-sync
+    // Track speech boundaries and word events for organic audio levels
     utterance.onboundary = (event: any) => {
       if (event.name === 'word' || event.name === 'sentence') {
         const remaining = cleanSpokenText.slice(event.charIndex);
@@ -345,6 +352,41 @@ export function useVoiceConsultation(
         setAiAudioLevel(hasOpenVowel ? 78 : 52);
       }
     };
+
+    // Prevent V8 garbage collection of utterance during long speech playback
+    (window as any)._activeSpeechUtterance = utterance;
+
+    const handleSpeechEnd = () => {
+      if (speechWatchdogRef.current) {
+        clearTimeout(speechWatchdogRef.current);
+        speechWatchdogRef.current = null;
+      }
+      (window as any)._activeSpeechUtterance = null;
+
+      isAISpeakingRef.current = false;
+      currentAiSpeechRef.current = '';
+      speechEndTimeRef.current = Date.now();
+      setIsAISpeaking(false);
+      setAiAudioLevel(0);
+      setActiveSpeaker('none');
+      setAssistantState('LISTENING');
+
+      if (aiAudioSimIntervalRef.current) {
+        clearInterval(aiAudioSimIntervalRef.current);
+        aiAudioSimIntervalRef.current = null;
+      }
+
+      // Automatically return to listening mode for user
+      restartRecognitionIfIdle();
+    };
+
+    // Safety watchdog timer: guarantees state reset if Chromium drops onend event
+    const estimatedDurationMs = Math.max(3000, Math.round(cleanSpokenText.length * 85) + 1500);
+    if (speechWatchdogRef.current) clearTimeout(speechWatchdogRef.current);
+    speechWatchdogRef.current = window.setTimeout(() => {
+      console.debug('Speech watchdog safely transitioned back to LISTENING');
+      handleSpeechEnd();
+    }, estimatedDurationMs);
 
     utterance.onstart = () => {
       isAISpeakingRef.current = true;
@@ -369,24 +411,6 @@ export function useVoiceConsultation(
       }, 70);
     };
 
-    const handleSpeechEnd = () => {
-      isAISpeakingRef.current = false;
-      currentAiSpeechRef.current = '';
-      speechEndTimeRef.current = Date.now();
-      setIsAISpeaking(false);
-      setAiAudioLevel(0);
-      setActiveSpeaker('none');
-      setAssistantState('LISTENING');
-
-      if (aiAudioSimIntervalRef.current) {
-        clearInterval(aiAudioSimIntervalRef.current);
-        aiAudioSimIntervalRef.current = null;
-      }
-
-      // Automatically return to listening mode for user
-      restartRecognitionIfIdle();
-    };
-
     utterance.onend = handleSpeechEnd;
     utterance.onerror = (e: any) => {
       if (e.error !== 'interrupted' && e.error !== 'canceled') {
@@ -394,6 +418,12 @@ export function useVoiceConsultation(
       }
       handleSpeechEnd();
     };
+
+    try {
+      if (window.speechSynthesis.paused) {
+        window.speechSynthesis.resume();
+      }
+    } catch {}
 
     window.speechSynthesis.speak(utterance);
   }, [volume, restartRecognitionIfIdle]);
@@ -471,16 +501,6 @@ export function useVoiceConsultation(
       return;
     }
 
-    // Reject room reverberation echo of finished AI speech within 450ms
-    if (
-      Date.now() - speechEndTimeRef.current < 450 &&
-      isAcousticEcho(fullText, lastAiSpeechRef.current)
-    ) {
-      console.debug('Suppressed acoustic echo after speech completion:', fullText);
-      setActiveSpeaker('none');
-      return;
-    }
-
     await sendToGeminiAndSpeak(fullText);
   }, [sendToGeminiAndSpeak]);
 
@@ -552,8 +572,10 @@ export function useVoiceConsultation(
           }
         }
 
-        // --- REGULAR SPEECH CAPTURE & SILENCE VAD ---
+        // --- REGULAR SPEECH CAPTURE & FAST VAD ---
+        let hasFinal = false;
         if (newFinalText.trim()) {
+          hasFinal = true;
           pendingUtteranceRef.current = `${pendingUtteranceRef.current} ${newFinalText.trim()}`.trim();
           currentInterimRef.current = '';
           setUserTranscript(pendingUtteranceRef.current);
@@ -564,13 +586,16 @@ export function useVoiceConsultation(
           setActiveSpeaker('user');
         }
 
-        // Arm or reset silence detection timer (1300ms pause indicates end of user speech)
+        // Arm or reset silence detection timer:
+        // Fast 550ms commit on final speech results for immediate ChatGPT-style response.
+        // 850ms on interim results to allow natural slight conversational pauses without mid-sentence cutoffs.
         if (silenceTimerRef.current) {
           clearTimeout(silenceTimerRef.current);
         }
+        const silenceDelay = hasFinal ? 550 : 850;
         silenceTimerRef.current = window.setTimeout(() => {
           commitUserSpeech();
-        }, 1300);
+        }, silenceDelay);
       };
 
       rec.onerror = (e: any) => {
@@ -809,6 +834,8 @@ export function useVoiceConsultation(
       if (durationIntervalRef.current) clearInterval(durationIntervalRef.current);
       if (aiAudioSimIntervalRef.current) clearInterval(aiAudioSimIntervalRef.current);
       if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+      if (speechWatchdogRef.current) clearTimeout(speechWatchdogRef.current);
+      (window as any)._activeSpeechUtterance = null;
       if (recognitionRef.current) {
         try {
           recognitionRef.current.abort();
