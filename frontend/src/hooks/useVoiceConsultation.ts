@@ -288,6 +288,16 @@ export function useVoiceConsultation(
       utterance.voice = matchedVoice;
     }
 
+    // Track speech boundaries and word events for organic lip-sync
+    utterance.onboundary = (event: any) => {
+      if (event.name === 'word' || event.name === 'sentence') {
+        const remaining = cleanSpokenText.slice(event.charIndex);
+        const currentWord = remaining.split(/\s+/)[0] || '';
+        const hasOpenVowel = /[aeouAEOUāīūēōअआईऊएओਆਈਊആഈഊ]/i.test(currentWord);
+        setAiAudioLevel(hasOpenVowel ? 78 : 52);
+      }
+    };
+
     utterance.onstart = () => {
       isAISpeakingRef.current = true;
       currentAiSpeechRef.current = cleanSpokenText.toLowerCase();
@@ -296,11 +306,19 @@ export function useVoiceConsultation(
       setActiveSpeaker('ai');
       setAssistantState('SPEAKING');
 
-      // Modulate AI audio level for holographic avatar
+      // Organic syllable wave modulation (~4.2 Hz human vocal rhythm)
+      let phase = 0;
       if (aiAudioSimIntervalRef.current) clearInterval(aiAudioSimIntervalRef.current);
       aiAudioSimIntervalRef.current = window.setInterval(() => {
-        setAiAudioLevel(Math.floor(Math.random() * 55) + 35);
-      }, 90);
+        phase += 0.35;
+        const wave = Math.sin(phase);
+        if (wave > 0.05) {
+          const level = Math.round(40 + wave * 45);
+          setAiAudioLevel(level);
+        } else {
+          setAiAudioLevel(8);
+        }
+      }, 70);
     };
 
     const handleSpeechEnd = () => {
