@@ -146,3 +146,4 @@ export const PatientVideoViewport: React.FC<Props> = ({
     </div>
   );
 };
+

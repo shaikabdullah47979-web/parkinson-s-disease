@@ -84,3 +84,4 @@ def test_consultation_summary_mocked():
         assert data["title"] == "Tremor & Tapping Inquiry"
         assert "Resting Tremor" in data["topics_discussed"]
         assert data["duration_seconds"] == 45.0
+

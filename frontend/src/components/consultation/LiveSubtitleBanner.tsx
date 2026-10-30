@@ -63,3 +63,4 @@ export const LiveSubtitleBanner: React.FC<Props> = ({
     </div>
   );
 };
+

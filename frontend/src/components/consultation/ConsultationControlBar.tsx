@@ -197,3 +197,4 @@ export const ConsultationControlBar: React.FC<Props> = ({
     </div>
   );
 };
+

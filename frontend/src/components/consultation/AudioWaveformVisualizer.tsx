@@ -139,3 +139,4 @@ export const AudioWaveformVisualizer: React.FC<Props> = ({
     </div>
   );
 };
+

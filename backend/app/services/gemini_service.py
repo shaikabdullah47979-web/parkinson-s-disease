@@ -103,31 +103,39 @@ class GeminiService:
             parts=[types.Part.from_text(text=req.message)]
         ))
 
-        try:
-            response = client.models.generate_content(
-                model=settings.GEMINI_MODEL,
-                contents=contents,
-                config=types.GenerateContentConfig(
-                    system_instruction=system_instruction,
-                    temperature=0.7,
-                    max_output_tokens=500
+        # Candidate models with automatic resilience fallback (fastest, most available first)
+        candidate_models = ["gemini-3.5-flash", "gemini-flash-latest", "gemini-3.8-flash"]
+
+        last_err = None
+        for m in candidate_models:
+            try:
+                response = client.models.generate_content(
+                    model=m,
+                    contents=contents,
+                    config=types.GenerateContentConfig(
+                        system_instruction=system_instruction,
+                        temperature=0.7,
+                        max_output_tokens=500
+                    )
                 )
-            )
 
-            reply_text = response.text or ""
-            if not reply_text.strip():
-                reply_text = "I am listening. Could you please repeat that?"
+                reply_text = response.text or ""
+                if not reply_text.strip():
+                    reply_text = "I am listening. Could you please repeat that?"
 
-            return ConsultationResponse(
-                reply=reply_text.strip(),
-                language=target_lang,
-                is_rtl=is_rtl,
-                disclaimer=disclaimer,
-                model_used=settings.GEMINI_MODEL
-            )
-        except Exception as e:
-            logger.error(f"Gemini API call failed: {e}", exc_info=True)
-            raise e
+                return ConsultationResponse(
+                    reply=reply_text.strip(),
+                    language=target_lang,
+                    is_rtl=is_rtl,
+                    disclaimer=disclaimer,
+                    model_used=m
+                )
+            except Exception as e:
+                logger.warn(f"Model {m} failed: {e}. Trying fallback if available...")
+                last_err = e
+
+        logger.error(f"All candidate Gemini models failed: {last_err}", exc_info=True)
+        raise last_err
 
     @classmethod
     def generate_summary(cls, req: ConsultationSummaryRequest) -> ConsultationSummaryResponse:
@@ -158,36 +166,39 @@ Required JSON Structure:
 }}
 """
 
-        try:
-            response = client.models.generate_content(
-                model=settings.GEMINI_MODEL,
-                contents=prompt,
-                config=types.GenerateContentConfig(
-                    response_mime_type="application/json",
-                    temperature=0.3,
-                    max_output_tokens=1000
+        candidate_models = ["gemini-3.5-flash", "gemini-flash-latest", "gemini-3.8-flash"]
+        for m in candidate_models:
+            try:
+                response = client.models.generate_content(
+                    model=m,
+                    contents=prompt,
+                    config=types.GenerateContentConfig(
+                        response_mime_type="application/json",
+                        temperature=0.3,
+                        max_output_tokens=1000
+                    )
                 )
-            )
 
-            data = json.loads(response.text)
-            now_str = datetime.now().strftime("%B %d, %Y - %I:%M %p")
+                data = json.loads(response.text)
+                now_str = datetime.now().strftime("%B %d, %Y - %I:%M %p")
 
-            return ConsultationSummaryResponse(
-                title=data.get("title", "AI Voice Consultation Summary"),
-                date_time=now_str,
-                duration_seconds=req.duration_seconds,
-                language=target_lang,
-                topics_discussed=data.get("topics_discussed", ["Parkinson's Disease Education"]),
-                key_questions_asked=data.get("key_questions_asked", []),
-                educational_explanations=data.get("educational_explanations", []),
-                questions_for_doctor=data.get("questions_for_doctor", ["Please consult a neurologist for comprehensive evaluation."]),
-                disclaimer=DISCLAIMERS.get(target_lang, DISCLAIMERS["en-IN"])
-            )
-        except Exception as e:
-            logger.warn(f"Failed to generate structured summary via Gemini: {e}")
-            # Honest fallback structure if generation fails
-            now_str = datetime.now().strftime("%B %d, %Y - %I:%M %p")
-            return ConsultationSummaryResponse(
+                return ConsultationSummaryResponse(
+                    title=data.get("title", "AI Voice Consultation Summary"),
+                    date_time=now_str,
+                    duration_seconds=req.duration_seconds,
+                    language=target_lang,
+                    topics_discussed=data.get("topics_discussed", ["Parkinson's Disease Education"]),
+                    key_questions_asked=data.get("key_questions_asked", []),
+                    educational_explanations=data.get("educational_explanations", []),
+                    questions_for_doctor=data.get("questions_for_doctor", ["Please consult a neurologist for comprehensive evaluation."]),
+                    disclaimer=DISCLAIMERS.get(target_lang, DISCLAIMERS["en-IN"])
+                )
+            except Exception as e:
+                logger.warn(f"Summary generation on {m} failed: {e}. Trying fallback if available...")
+
+        # Honest fallback structure if all models fail
+        now_str = datetime.now().strftime("%B %d, %Y - %I:%M %p")
+        return ConsultationSummaryResponse(
                 title="NeuroVoice Consultation Summary",
                 date_time=now_str,
                 duration_seconds=req.duration_seconds,
@@ -203,3 +214,4 @@ Required JSON Structure:
             )
 
 gemini_service = GeminiService()
+

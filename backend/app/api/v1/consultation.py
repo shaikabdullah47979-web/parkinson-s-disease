@@ -150,3 +150,4 @@ async def websocket_live_consultation(websocket: WebSocket):
             await websocket.close()
         except:
             pass
+

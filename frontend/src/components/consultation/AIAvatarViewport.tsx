@@ -248,3 +248,4 @@ export const AIAvatarViewport: React.FC<Props> = ({
     </div>
   );
 };
+

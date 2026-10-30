@@ -52,3 +52,4 @@ class ConsultationConfigResponse(BaseModel):
     server_key_configured: bool
     default_model: str
     supported_languages: List[SupportedLanguage]
+

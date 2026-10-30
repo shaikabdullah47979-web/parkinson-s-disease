@@ -123,3 +123,4 @@ export const ConsultationTopBar: React.FC<Props> = ({
     </header>
   );
 };
+

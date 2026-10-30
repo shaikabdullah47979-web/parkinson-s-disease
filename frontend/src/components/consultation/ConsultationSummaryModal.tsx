@@ -306,3 +306,4 @@ export const ConsultationSummaryModal: React.FC<Props> = ({
     </div>
   );
 };
+
