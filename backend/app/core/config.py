@@ -24,7 +24,7 @@ class Settings:
     
     # Gemini AI API Configuration
     GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
-    GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", "gemini-3.5-flash")
+    GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
 
     # CORS
     BACKEND_CORS_ORIGINS: List[str] = [

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Camera, CameraOff, Mic, MicOff, Shield, RefreshCw } from 'lucide-react';
+import { Camera, CameraOff, Mic, MicOff, Shield, RefreshCw, Headphones } from 'lucide-react';
 
 interface Props {
   videoRef: React.RefObject<HTMLVideoElement>;
@@ -70,6 +70,14 @@ export const PatientVideoViewport: React.FC<Props> = ({
           <div className="hidden sm:flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-900/80 backdrop-blur-md border border-slate-700/60 text-[10px] text-slate-300">
             <Shield className="w-3 h-3 text-cyan-400" />
             <span>Encrypted Local Stream</span>
+          </div>
+
+          <div
+            className="hidden lg:flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-900/80 backdrop-blur-md border border-emerald-500/30 text-[10px] text-emerald-300"
+            title="Wearing headphones ensures optimal acoustic echo cancellation and seamless hands-free barge-in"
+          >
+            <Headphones className="w-3 h-3 text-emerald-400" />
+            <span>Headphones Recommended</span>
           </div>
         </div>
 
