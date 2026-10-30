@@ -142,13 +142,27 @@ export function useVoiceConsultation(
   const pendingUtteranceRef = useRef<string>('');
   const currentInterimRef = useRef<string>('');
   const speechWatchdogRef = useRef<number | null>(null);
+  const restartTimeoutRef = useRef<number | null>(null);
+  const startRecognitionSessionRef = useRef<() => void>(() => {});
 
   // Setup Web Audio Analyser with echo cancellation
   const setupAudioAnalyser = async (stream: MediaStream) => {
     try {
       const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-      if (!AudioCtx) return;
+      if (!AudioCtx) {
+        console.warn('[Audio] Web Audio API not supported in this browser');
+        return;
+      }
       const ctx = new AudioCtx();
+      if (ctx.state === 'suspended') {
+        await ctx.resume();
+      }
+
+      const audioTracks = stream.getAudioTracks();
+      if (audioTracks && audioTracks.length > 0) {
+        console.log('[Mic] Connected track:', audioTracks[0].label || 'Default Microphone', 'State:', audioTracks[0].readyState);
+      }
+
       const analyser = ctx.createAnalyser();
       analyser.fftSize = 256;
       analyser.smoothingTimeConstant = 0.5;
@@ -182,7 +196,7 @@ export function useVoiceConsultation(
 
       updateMeter();
     } catch (e) {
-      console.warn('Web Audio Analyser setup warning:', e);
+      console.warn('[Audio] Analyser setup error:', e);
     }
   };
 
@@ -232,21 +246,6 @@ export function useVoiceConsultation(
     setActiveSpeaker('none');
     setAssistantState('LISTENING');
   }, [interruptAIInternal]);
-
-  // Restart speech recognition safely if idle
-  const restartRecognitionIfIdle = useCallback(() => {
-    if (!isConsultationActiveRef.current || !isMicActiveRef.current) return;
-    if (!recognitionRef.current) return;
-
-    try {
-      recognitionRef.current.start();
-    } catch (err: any) {
-      // Ignore InvalidStateError (already running)
-      if (err.name !== 'InvalidStateError') {
-        console.debug('Recognition restart notice:', err.message);
-      }
-    }
-  }, []);
 
   // Spoken response synthesis via Web SpeechSynthesis
   const speakText = useCallback((text: string, langCode: SupportedLanguageCode) => {
@@ -357,6 +356,7 @@ export function useVoiceConsultation(
     (window as any)._activeSpeechUtterance = utterance;
 
     const handleSpeechEnd = () => {
+      console.log('[TTS] Audio playback completed. Returning to LISTENING.');
       if (speechWatchdogRef.current) {
         clearTimeout(speechWatchdogRef.current);
         speechWatchdogRef.current = null;
@@ -376,25 +376,29 @@ export function useVoiceConsultation(
         aiAudioSimIntervalRef.current = null;
       }
 
-      // Automatically return to listening mode for user
-      restartRecognitionIfIdle();
+      // Automatically return to listening mode for user with a fresh instance
+      startRecognitionSessionRef.current();
     };
 
     // Safety watchdog timer: guarantees state reset if Chromium drops onend event
     const estimatedDurationMs = Math.max(3000, Math.round(cleanSpokenText.length * 85) + 1500);
     if (speechWatchdogRef.current) clearTimeout(speechWatchdogRef.current);
     speechWatchdogRef.current = window.setTimeout(() => {
-      console.debug('Speech watchdog safely transitioned back to LISTENING');
+      console.debug('[TTS] Speech watchdog safely transitioned back to LISTENING');
       handleSpeechEnd();
     }, estimatedDurationMs);
 
     utterance.onstart = () => {
+      console.log('[TTS] Audio playback started for Dr. AI Neurologist');
       isAISpeakingRef.current = true;
       currentAiSpeechRef.current = cleanSpokenText.toLowerCase();
       lastAiSpeechRef.current = cleanSpokenText.toLowerCase();
       setIsAISpeaking(true);
       setActiveSpeaker('ai');
       setAssistantState('SPEAKING');
+
+      // Start fresh recognition session with an empty buffer for instant barge-in detection
+      startRecognitionSessionRef.current();
 
       // Organic syllable wave modulation (~4.2 Hz human vocal rhythm)
       let phase = 0;
@@ -414,7 +418,7 @@ export function useVoiceConsultation(
     utterance.onend = handleSpeechEnd;
     utterance.onerror = (e: any) => {
       if (e.error !== 'interrupted' && e.error !== 'canceled') {
-        console.warn('SpeechSynthesis notice:', e.error);
+        console.warn('[TTS] SpeechSynthesis notice:', e.error);
       }
       handleSpeechEnd();
     };
@@ -426,7 +430,7 @@ export function useVoiceConsultation(
     } catch {}
 
     window.speechSynthesis.speak(utterance);
-  }, [volume, restartRecognitionIfIdle]);
+  }, [volume]);
 
   // Send statement to Gemini API and trigger natural conversational reply
   const sendToGeminiAndSpeak = useCallback(async (text: string) => {
@@ -449,6 +453,7 @@ export function useVoiceConsultation(
     setActiveSpeaker('user');
 
     try {
+      console.log('[AI] Querying Gemini for message:', trimmed, 'Language:', languageRef.current);
       const historyPayload = messagesRef.current.map((m) => ({
         role: m.role,
         content: m.content
@@ -461,6 +466,8 @@ export function useVoiceConsultation(
         patientContext,
         userApiKey || undefined
       );
+
+      console.log('[AI] Gemini replied:', res.reply);
 
       const aiMsg: ConsultationChatMessage = {
         id: `msg-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
@@ -475,10 +482,11 @@ export function useVoiceConsultation(
       // Trigger spoken output
       speakText(res.reply, languageRef.current);
     } catch (err: any) {
-      console.error('Consultation chat error:', err);
-      setError(err.message || 'Failed to receive AI response.');
+      console.error('[AI] Consultation chat error:', err);
+      setError(err.message || 'Failed to receive AI response from Gemini.');
       setAssistantState('LISTENING');
       setActiveSpeaker('none');
+      startRecognitionSessionRef.current();
     } finally {
       isProcessingRef.current = false;
     }
@@ -501,26 +509,46 @@ export function useVoiceConsultation(
       return;
     }
 
+    console.log('[VAD] Committing user statement:', fullText);
+
+    // Abort active STT session to flush buffered results and avoid ghost barge-in
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.abort();
+      } catch {}
+    }
+
     await sendToGeminiAndSpeak(fullText);
   }, [sendToGeminiAndSpeak]);
 
-  // Setup Web Speech API continuous hands-free speech recognition
-  const setupSpeechRecognition = useCallback(() => {
+  // Start continuous hands-free speech recognition with fresh instance every time
+  const startRecognitionSession = useCallback(() => {
+    if (!isConsultationActiveRef.current || !isMicActiveRef.current) {
+      return;
+    }
+
+    // Clean up previous recognition instance completely
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.onstart = null;
+        recognitionRef.current.onresult = null;
+        recognitionRef.current.onerror = null;
+        recognitionRef.current.onend = null;
+        recognitionRef.current.abort();
+      } catch {}
+      recognitionRef.current = null;
+    }
+
     const SpeechRec = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
     if (!SpeechRec) {
       setError(
         'Speech recognition is not supported in this browser. Please use Chrome or Edge for full hands-free voice consultation.'
       );
+      setAssistantState('READY');
       return;
     }
 
     try {
-      if (recognitionRef.current) {
-        try {
-          recognitionRef.current.abort();
-        } catch {}
-      }
-
       const rec = new SpeechRec();
       rec.continuous = true;
       rec.interimResults = true;
@@ -537,6 +565,7 @@ export function useVoiceConsultation(
       rec.lang = langMapping[languageRef.current] || 'en-IN';
 
       rec.onstart = () => {
+        console.log('[STT] SpeechRecognition session active in language:', rec.lang);
         if (!isAISpeakingRef.current && !isProcessingRef.current) {
           setAssistantState('LISTENING');
         }
@@ -557,19 +586,26 @@ export function useVoiceConsultation(
         const candidatePhrase = (newFinalText || interimText).trim();
         if (!candidatePhrase) return;
 
+        console.debug('[STT] Captured speech segment:', candidatePhrase, { isFinal: Boolean(newFinalText), aiSpeaking: isAISpeakingRef.current });
+
         // --- BARGE-IN & ACOUSTIC ECHO GATING ---
         if (isAISpeakingRef.current) {
-          // If speaker sound leaked into microphone, drop it immediately
           if (isAcousticEcho(candidatePhrase, currentAiSpeechRef.current)) {
+            console.debug('[VAD] Suppressed speaker acoustic bleed during AI speech:', candidatePhrase);
             return;
           }
 
-          // Genuine user speech detected while AI is speaking -> IMMEDIATE BARGE-IN
           if (candidatePhrase.length >= 2) {
+            console.log('[VAD] Genuine user barge-in detected:', candidatePhrase);
             interruptAIInternal();
             setAssistantState('LISTENING');
             setActiveSpeaker('user');
           }
+        }
+
+        // If currently processing with Gemini, drop incoming text
+        if (isProcessingRef.current) {
+          return;
         }
 
         // --- REGULAR SPEECH CAPTURE & FAST VAD ---
@@ -587,8 +623,7 @@ export function useVoiceConsultation(
         }
 
         // Arm or reset silence detection timer:
-        // Fast 550ms commit on final speech results for immediate ChatGPT-style response.
-        // 850ms on interim results to allow natural slight conversational pauses without mid-sentence cutoffs.
+        // 550ms for final recognized speech segments, 850ms for interim results
         if (silenceTimerRef.current) {
           clearTimeout(silenceTimerRef.current);
         }
@@ -599,27 +634,38 @@ export function useVoiceConsultation(
       };
 
       rec.onerror = (e: any) => {
-        // no-speech and aborted are standard events during natural pauses; do not treat as fatal error
-        if (e.error !== 'no-speech' && e.error !== 'aborted') {
-          console.warn('Speech recognition warning:', e.error);
+        console.warn('[STT] Speech recognition notice:', e.error);
+        if (e.error === 'not-allowed') {
+          setError('Microphone permission was denied. Please allow microphone access in your browser address bar.');
+          setAssistantState('READY');
+        } else if (e.error === 'audio-capture') {
+          setError('No microphone hardware detected or it is in use by another application.');
+          setAssistantState('READY');
+        } else if (e.error === 'network') {
+          console.warn('[STT] Network error reaching speech recognition service. Will retry automatically.');
         }
       };
 
       rec.onend = () => {
-        // Automatically keep continuous listening active while session is active
-        if (isConsultationActiveRef.current && isMicActiveRef.current) {
-          window.setTimeout(() => {
-            restartRecognitionIfIdle();
-          }, 200);
+        console.debug('[STT] SpeechRecognition session ended.');
+        // Automatically spawn a fresh instance if consultation is still active
+        if (isConsultationActiveRef.current && isMicActiveRef.current && !isProcessingRef.current) {
+          if (restartTimeoutRef.current) clearTimeout(restartTimeoutRef.current);
+          restartTimeoutRef.current = window.setTimeout(() => {
+            startRecognitionSession();
+          }, 150);
         }
       };
 
       recognitionRef.current = rec;
       rec.start();
-    } catch (err) {
-      console.warn('Speech recognition start notice:', err);
+    } catch (err: any) {
+      console.warn('[STT] Speech recognition start exception:', err.message);
     }
-  }, [interruptAIInternal, commitUserSpeech, restartRecognitionIfIdle]);
+  }, [interruptAIInternal, commitUserSpeech]);
+
+  // Keep ref pointing to latest startRecognitionSession function
+  startRecognitionSessionRef.current = startRecognitionSession;
 
   // Start Consultation Session: initializes camera, mic, greets user once, and starts listening
   const startConsultation = useCallback(async (): Promise<boolean> => {
@@ -653,7 +699,7 @@ export function useVoiceConsultation(
       }, 1000);
 
       // Initialize speech recognition
-      setupSpeechRecognition();
+      startRecognitionSession();
 
       // Step 2: AI greets user ONCE in the selected language
       const currentLang = languageRef.current;
@@ -679,7 +725,7 @@ export function useVoiceConsultation(
       setError('Microphone permission was denied. Please allow microphone access to talk with Dr. AI Neurologist.');
       return false;
     }
-  }, [setupSpeechRecognition, speakText]);
+  }, [setupAudioAnalyser, startRecognitionSession, speakText]);
 
   // Toggle Mic Mute/Unmute
   const toggleMic = useCallback(() => {
@@ -705,38 +751,31 @@ export function useVoiceConsultation(
             sampleRate: 48000
           }
         })
-        .then((stream) => {
+        .then(async (stream) => {
           micStreamRef.current = stream;
-          setupAudioAnalyser(stream);
+          await setupAudioAnalyser(stream);
           setIsMicActive(true);
           isMicActiveRef.current = true;
-          setupSpeechRecognition();
+          startRecognitionSession();
         })
         .catch(() => {
           setError('Microphone access unavailable.');
         });
     }
-  }, [isMicActive, setupSpeechRecognition, stopAudioStreams]);
+  }, [isMicActive, setupAudioAnalyser, startRecognitionSession, stopAudioStreams]);
 
   // Update speech recognition language on language change
   const handleLanguageChange = useCallback(
     (newLang: SupportedLanguageCode) => {
+      console.log('[Lang] Language changed to:', newLang);
       setLanguage(newLang);
       languageRef.current = newLang;
 
-      if (recognitionRef.current) {
-        try {
-          recognitionRef.current.abort();
-          recognitionRef.current.lang = newLang;
-          if (isMicActiveRef.current) {
-            window.setTimeout(() => {
-              restartRecognitionIfIdle();
-            }, 150);
-          }
-        } catch {}
+      if (isConsultationActiveRef.current && isMicActiveRef.current) {
+        startRecognitionSession();
       }
     },
-    [restartRecognitionIfIdle]
+    [startRecognitionSession]
   );
 
   // Manual text query submission
@@ -756,6 +795,10 @@ export function useVoiceConsultation(
     if (silenceTimerRef.current) {
       clearTimeout(silenceTimerRef.current);
       silenceTimerRef.current = null;
+    }
+    if (restartTimeoutRef.current) {
+      clearTimeout(restartTimeoutRef.current);
+      restartTimeoutRef.current = null;
     }
 
     interruptAIInternal();
@@ -835,6 +878,7 @@ export function useVoiceConsultation(
       if (aiAudioSimIntervalRef.current) clearInterval(aiAudioSimIntervalRef.current);
       if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
       if (speechWatchdogRef.current) clearTimeout(speechWatchdogRef.current);
+      if (restartTimeoutRef.current) clearTimeout(restartTimeoutRef.current);
       (window as any)._activeSpeechUtterance = null;
       if (recognitionRef.current) {
         try {

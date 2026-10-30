@@ -17,36 +17,60 @@ export const LiveSubtitleBanner: React.FC<Props> = ({
 }) => {
   const isUrdu = language === 'ur-PK';
 
-  if (activeSpeaker === 'none' && !userTranscript && !aiResponse) {
-    return (
-      <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-3 text-center text-xs text-slate-400 italic">
-        Speak into your microphone or ask a question to begin live consultation.
-      </div>
-    );
-  }
+  // Determine active speaker label and content
+  let speakerLabel = 'Dr. AI Neurologist';
+  let displayText = aiResponse;
+  let isUser = false;
 
-  const displayText = activeSpeaker === 'user' ? userTranscript : aiResponse;
-  const speakerLabel = activeSpeaker === 'user' ? 'You (Speaking)' : 'Dr. AI Neurologist';
+  if (activeSpeaker === 'user') {
+    speakerLabel = 'You (Speaking)';
+    displayText = userTranscript || 'Listening to your voice...';
+    isUser = true;
+  } else if (activeSpeaker === 'ai') {
+    speakerLabel = 'Dr. AI Neurologist';
+    displayText = aiResponse || 'Responding...';
+    isUser = false;
+  } else {
+    // Idle / transition between turns
+    if (userTranscript) {
+      speakerLabel = 'You (Recognized)';
+      displayText = userTranscript;
+      isUser = true;
+    } else if (aiResponse) {
+      speakerLabel = 'Dr. AI Neurologist';
+      displayText = aiResponse;
+      isUser = false;
+    } else {
+      return (
+        <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 text-center text-xs text-slate-500 italic flex items-center justify-center gap-2">
+          <Mic className="w-3.5 h-3.5 text-cyan-600 animate-pulse" />
+          <span>Microphone active. Speak naturally or ask any question to begin live consultation.</span>
+        </div>
+      );
+    }
+  }
 
   return (
     <div
       dir={isUrdu ? 'rtl' : 'ltr'}
       className={`rounded-2xl border p-4 transition-all duration-200 shadow-xs ${
-        activeSpeaker === 'user'
-          ? 'bg-emerald-50/70 border-emerald-200 text-emerald-950'
+        isUser
+          ? 'bg-emerald-50/80 border-emerald-300 text-emerald-950 shadow-emerald-500/10'
           : 'bg-white border-[#E0EFFA] text-slate-800'
       }`}
     >
       <div className={`flex items-center gap-2 mb-1.5 text-[11px] font-bold uppercase tracking-wider ${
-        activeSpeaker === 'user' ? 'text-emerald-700' : 'text-cyan-700'
+        isUser ? 'text-emerald-700' : 'text-cyan-700'
       } ${isUrdu ? 'flex-row-reverse' : ''}`}>
-        {activeSpeaker === 'user' ? (
+        {isUser ? (
           <>
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
             <Mic className="w-3.5 h-3.5" />
             <span>{speakerLabel}</span>
           </>
         ) : (
           <>
+            <span className="w-2 h-2 rounded-full bg-cyan-500" />
             <Volume2 className="w-3.5 h-3.5" />
             <span>{speakerLabel}</span>
           </>
@@ -58,7 +82,7 @@ export const LiveSubtitleBanner: React.FC<Props> = ({
           isUrdu ? 'font-serif text-right text-lg' : 'text-left'
         }`}
       >
-        {displayText || (activeSpeaker === 'user' ? 'Listening...' : 'Thinking...')}
+        {displayText}
       </p>
     </div>
   );
