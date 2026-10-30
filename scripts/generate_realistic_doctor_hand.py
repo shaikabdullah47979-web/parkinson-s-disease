@@ -194,3 +194,4 @@ def create_doctor_hand(is_left=False, output_path="frontend/public/assets/avatar
 if __name__ == "__main__":
     create_doctor_hand(is_left=False, output_path="frontend/public/assets/avatars/dr_hand_right.png")
     create_doctor_hand(is_left=True, output_path="frontend/public/assets/avatars/dr_hand_left.png")
+

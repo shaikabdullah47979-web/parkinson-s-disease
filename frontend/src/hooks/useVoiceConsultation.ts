@@ -262,8 +262,8 @@ export function useVoiceConsultation(
 
     const utterance = new SpeechSynthesisUtterance(cleanSpokenText);
     utterance.volume = volume;
-    utterance.rate = 1.0;
-    utterance.pitch = 1.0;
+    utterance.rate = 0.98;   // Calm, professional physician pacing
+    utterance.pitch = 0.88;  // Authentic, resonant male doctor pitch
 
     // Supported language mapping
     const speechLangMap: Record<SupportedLanguageCode, string> = {
@@ -276,16 +276,64 @@ export function useVoiceConsultation(
     const targetLocale = speechLangMap[langCode] || 'en-IN';
     utterance.lang = targetLocale;
 
-    // Voice selection matching target locale or prefix
+    // --- MALE VOICE SELECTION ENGINE ---
+    // Specifically filter out female voices and prioritize authentic male voices
     const voices = window.speechSynthesis.getVoices();
     const primaryPrefix = targetLocale.split('-')[0].toLowerCase();
-    const matchedVoice = voices.find(
+
+    const femaleKeywords = [
+      'female', 'woman', 'zira', 'heera', 'hazel', 'susan', 'catherine',
+      'jenny', 'aria', 'sarah', 'kavya', 'priya', 'kalpana', 'swara',
+      'neerja', 'ayanda', 'ananya', 'geeta', 'shruti', 'sunita'
+    ];
+
+    const maleKeywords = [
+      'male', 'man', 'david', 'mark', 'ravi', 'hemant', 'george',
+      'guy', 'prabhat', 'madhav', 'rohit', 'ajay', 'rahul', 'stefan',
+      'james', 'richard', 'brian', 'tarik', 'salman', 'daniel'
+    ];
+
+    const isExplicitMale = (v: any) => {
+      const name = v.name.toLowerCase();
+      return maleKeywords.some((kw) => name.includes(kw));
+    };
+
+    const isExplicitFemale = (v: any) => {
+      const name = v.name.toLowerCase();
+      return femaleKeywords.some((kw) => name.includes(kw));
+    };
+
+    // 1. Primary: Target locale voice with explicit male identifier
+    let selectedVoice = voices.find(
       (v) =>
-        v.lang.toLowerCase() === targetLocale.toLowerCase() ||
-        v.lang.toLowerCase().replace('_', '-').startsWith(primaryPrefix)
+        (v.lang.toLowerCase() === targetLocale.toLowerCase() ||
+          v.lang.toLowerCase().replace('_', '-').startsWith(primaryPrefix)) &&
+        isExplicitMale(v) &&
+        !isExplicitFemale(v)
     );
-    if (matchedVoice) {
-      utterance.voice = matchedVoice;
+
+    // 2. Secondary: Target locale voice that is NOT explicitly female
+    if (!selectedVoice) {
+      selectedVoice = voices.find(
+        (v) =>
+          (v.lang.toLowerCase() === targetLocale.toLowerCase() ||
+            v.lang.toLowerCase().replace('_', '-').startsWith(primaryPrefix)) &&
+          !isExplicitFemale(v)
+      );
+    }
+
+    // 3. Tertiary: Any high-quality male voice (e.g. David, Mark, Ravi)
+    if (!selectedVoice) {
+      selectedVoice = voices.find((v) => isExplicitMale(v) && !isExplicitFemale(v));
+    }
+
+    // 4. Fallback: Any voice not matching female names
+    if (!selectedVoice) {
+      selectedVoice = voices.find((v) => !isExplicitFemale(v));
+    }
+
+    if (selectedVoice) {
+      utterance.voice = selectedVoice;
     }
 
     // Track speech boundaries and word events for organic lip-sync
