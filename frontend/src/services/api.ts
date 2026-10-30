@@ -117,6 +117,49 @@ export const api = {
     return data;
   },
 
-  getMe: () => request<User>('/auth/me')
+  getMe: () => request<User>('/auth/me'),
+
+  // AI Voice Consultation
+  getConsultationConfig: () => request<any>('/consultation/config'),
+
+  chatConsultation: (
+    message: string,
+    language: string,
+    history: any[],
+    patientContext?: any,
+    apiKey?: string
+  ) =>
+    request<{
+      reply: string;
+      language: string;
+      is_rtl: boolean;
+      disclaimer: string;
+      model_used: string;
+    }>('/consultation/chat', {
+      method: 'POST',
+      body: JSON.stringify({
+        message,
+        language,
+        history,
+        patient_context: patientContext,
+        api_key: apiKey || undefined
+      })
+    }),
+
+  generateConsultationSummary: (
+    history: any[],
+    language: string,
+    durationSeconds: number,
+    apiKey?: string
+  ) =>
+    request<any>('/consultation/summary', {
+      method: 'POST',
+      body: JSON.stringify({
+        history,
+        language,
+        duration_seconds: durationSeconds,
+        api_key: apiKey || undefined
+      })
+    })
 };
 

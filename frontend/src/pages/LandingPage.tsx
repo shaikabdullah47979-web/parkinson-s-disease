@@ -13,7 +13,9 @@ import {
   CheckCircle2,
   AlertCircle,
   Clock,
-  Sparkles
+  Sparkles,
+  Bot,
+  Mic
 } from 'lucide-react';
 import { MedicalDisclaimer } from '../components/MedicalDisclaimer';
 import { api } from '../services/api';
@@ -103,6 +105,15 @@ export const LandingPage: React.FC = () => {
           </p>
 
           <div className="flex flex-wrap gap-3 pt-2">
+            <Link
+              to="/consultation"
+              className="inline-flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-600 hover:to-indigo-700 text-white font-semibold text-xs shadow-glow-pill transition-all"
+            >
+              <Mic className="w-4 h-4 text-white" />
+              <span>AI Voice Consultation</span>
+              <span className="px-1.5 py-0.2 rounded bg-white/30 text-[9px] font-bold uppercase">Multilingual</span>
+            </Link>
+
             <Link
               to="/movement"
               className="inline-flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-cyan-400 to-sky-500 hover:from-cyan-500 hover:to-sky-600 text-white font-semibold text-xs shadow-glow-pill transition-all"

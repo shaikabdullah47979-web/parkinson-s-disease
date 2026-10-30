@@ -18,6 +18,7 @@ from backend.app.api.v1.dataset import router as dataset_router
 from backend.app.api.v1.model import router as model_router
 from backend.app.api.v1.predict import router as predict_router
 from backend.app.api.v1.movement import router as movement_router
+from backend.app.api.v1.consultation import router as consultation_router
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("parkinsons_app")
@@ -58,6 +59,7 @@ app.include_router(dataset_router, prefix=settings.API_V1_STR)
 app.include_router(model_router, prefix=settings.API_V1_STR)
 app.include_router(predict_router, prefix=settings.API_V1_STR)
 app.include_router(movement_router, prefix=settings.API_V1_STR)
+app.include_router(consultation_router, prefix=settings.API_V1_STR)
 
 # Production Frontend Static Serving
 FRONTEND_DIST = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "frontend", "dist"))

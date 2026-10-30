@@ -10,6 +10,7 @@ import { LiveMovementPage } from './pages/LiveMovementPage';
 import { ModelMetricsPage } from './pages/ModelMetricsPage';
 import { DatasetPage } from './pages/DatasetPage';
 import { PredictionHistoryPage } from './pages/PredictionHistoryPage';
+import { VoiceConsultationPage } from './pages/VoiceConsultationPage';
 
 export const App: React.FC = () => {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState<boolean>(false);
@@ -33,6 +34,7 @@ export const App: React.FC = () => {
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/predict" element={<PredictionPage />} />
               <Route path="/movement" element={<LiveMovementPage />} />
+              <Route path="/consultation" element={<VoiceConsultationPage />} />
               <Route path="/models" element={<ModelMetricsPage />} />
               <Route path="/dataset" element={<DatasetPage />} />
               <Route path="/history" element={<PredictionHistoryPage />} />

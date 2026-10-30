@@ -19,6 +19,10 @@ class Settings:
     ML_ARTIFACTS_DIR: str = os.path.join(BASE_DIR, "..", "ml", "artifacts")
     ML_DATA_DIR: str = os.path.join(BASE_DIR, "..", "ml", "data")
     
+    # Gemini AI API Configuration
+    GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
+    GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
+
     # CORS
     BACKEND_CORS_ORIGINS: List[str] = [
         "http://localhost:5173",

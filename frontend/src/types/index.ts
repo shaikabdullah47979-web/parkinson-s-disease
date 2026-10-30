@@ -122,3 +122,39 @@ export interface AuthResponse {
   user: User;
 }
 
+// AI Voice Consultation Types
+export type SupportedLanguageCode = 'en-IN' | 'hi-IN' | 'kn-IN' | 'mr-IN' | 'ur-PK';
+
+export interface SupportedLanguageInfo {
+  code: SupportedLanguageCode;
+  name: string;
+  native_name: string;
+  direction: 'ltr' | 'rtl';
+}
+
+export interface ConsultationChatMessage {
+  id: string;
+  role: 'user' | 'model' | 'system';
+  content: string;
+  timestamp: number;
+}
+
+export interface ConsultationConfig {
+  server_key_configured: boolean;
+  default_model: string;
+  supported_languages: SupportedLanguageInfo[];
+}
+
+export interface ConsultationSummary {
+  title: string;
+  date_time: string;
+  duration_seconds: number;
+  language: string;
+  topics_discussed: string[];
+  key_questions_asked: string[];
+  educational_explanations: string[];
+  questions_for_doctor: string[];
+  disclaimer: string;
+}
+
+

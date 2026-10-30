@@ -10,7 +10,8 @@ import {
   History,
   X,
   Activity,
-  ShieldCheck
+  ShieldCheck,
+  Bot
 } from 'lucide-react';
 
 interface Props {
@@ -26,6 +27,7 @@ export const Navbar: React.FC<Props> = ({ mobileOpen, onCloseMobile }) => {
     { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { to: '/predict', label: 'Predictor', icon: BrainCircuit },
     { to: '/movement', label: 'Live Movement Test', icon: Footprints },
+    { to: '/consultation', label: 'AI Voice Consultation', icon: Bot, isNew: true },
     { to: '/models', label: 'Model Metrics', icon: BarChart3 },
     { to: '/dataset', label: 'Dataset', icon: Database },
     { to: '/history', label: 'History', icon: History }
@@ -98,7 +100,14 @@ export const Navbar: React.FC<Props> = ({ mobileOpen, onCloseMobile }) => {
                       isActive ? 'text-white' : 'text-cyan-600/80 group-hover:text-cyan-600'
                     }`}
                   />
-                  <span>{item.label}</span>
+                  <span className="flex-1">{item.label}</span>
+                  {item.isNew && (
+                    <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider ${
+                      isActive ? 'bg-white/30 text-white' : 'bg-cyan-100 text-cyan-800'
+                    }`}>
+                      Live
+                    </span>
+                  )}
                 </Link>
               );
             })}

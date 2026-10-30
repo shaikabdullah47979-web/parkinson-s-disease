@@ -35,6 +35,8 @@ export const TopHeader: React.FC<Props> = ({ onToggleMobileSidebar }) => {
         return 'Dysphonia Predictor';
       case '/movement':
         return 'Live Movement Assessment';
+      case '/consultation':
+        return 'AI Voice Consultation Room';
       case '/models':
         return 'Model Metrics & Benchmarks';
       case '/dataset':
